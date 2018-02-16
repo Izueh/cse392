@@ -1,22 +1,48 @@
 #include "server.h"
 
-int main(){
-    int sockfd, n;
+int main(int argc, char** argv){
+
+    int sockfd, n, s;
     char recvline[MAXLINE + 1];
-    struct sockaddr_in servaddr;
+	struct addrinfo hints;
+	struct addrinfo *res, *rp;
+	
+	if( argc !=  3 ){
+		printf("USAGE: %s address port\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
 
-    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-        printf("socket error");
+	// initialize getaddr struc
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_PASSIVE;
+	hints.ai_protocol = 0;
+	hints.ai_canonname = NULL;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
+	
+	// try connections
+	s = getaddrinfo(argv[1],argv[2], &hints, &res);
+	if (s != 0){
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+		exit(EXIT_FAILURE);
+	}
 
-    bzero(&servaddr, sizeof(servaddr));
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(5020);
-    char ip_address[] = "127.0.0.1";
-    if(inet_pton(AF_INET, ip_address, &servaddr.sin_addr) <= 0)
-        printf("error");
+	for(rp = res; rp != NULL; rp = rp->ai_next){
+		sockfd = socket(rp->ai_family, rp->ai_socktype, 
+				rp->ai_protocol);
+		if (sockfd == -1)
+			continue;
+		if (connect(sockfd, rp->ai_addr, rp->ai_addrlen) != -1)
+			break;
+		close(sockfd);
+	}
 
-    if (connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0)
-        printf("connect error");
+	if (rp == NULL){
+		printf("Failed to connect to %s:%s",argv[1],argv[2]);
+		exit(EXIT_FAILURE);
+	}
 
     char buff[] = "ayyyy";
     write(sockfd, buff, sizeof(buff));
