@@ -1,0 +1,21 @@
+#ifndef serv_h
+#define serv_h
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/select.h>
+#include <poll.h>
+
+#include <arpa/inet.h>
+
+
+#define MAXLINE 4096
+
+
+#endif
+
