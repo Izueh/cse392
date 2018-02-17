@@ -1,6 +1,8 @@
 #include "server.h"
 #include "logger.h"
 
+void login(char* name, int sockfd);
+
 int main(int argc, char** argv){
        #define MAX_EVENTS 10
         int sockfd, n, s, opt, e_fd, ndfs;
@@ -42,7 +44,7 @@ int main(int argc, char** argv){
         hints.ai_next = NULL;
         
         // try connections
-        s = getaddrinfo(argv[1], argv[2], &hints, &res);
+        s = getaddrinfo(argv[2], argv[3], &hints, &res);
         if (s != 0){
                 fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
                 exit(EXIT_FAILURE);
@@ -64,6 +66,8 @@ int main(int argc, char** argv){
                 exit(EXIT_FAILURE);
         }
 
+        login(argv[1], sockfd);
+
         // epoll stuff
         e_fd = epoll_create1(0);
 
@@ -72,14 +76,16 @@ int main(int argc, char** argv){
                 exit(EXIT_FAILURE);
         }
 
+        //add Server Socket to the epoll
         ev.events = EPOLLIN;
         ev.data.fd = sockfd;
-
         if (epoll_ctl(e_fd, EPOLL_CTL_ADD, sockfd, &ev) \
                         == -1){
                 perror("epoll_ctl: sockfd");
                 exit(EXIT_FAILURE);
         }
+
+        //add STDIN to epoll
         ev.events = EPOLLIN;
         ev.data.fd = STDIN_FILENO;
         if (epoll_ctl(e_fd, EPOLL_CTL_ADD, STDIN_FILENO, &ev) \
@@ -88,8 +94,8 @@ int main(int argc, char** argv){
                 exit(EXIT_FAILURE);
         }
 
-
         while(1){
+                //wait for signal on either STDIN or Socket
                 ndfs = epoll_wait(e_fd, events, sockfd, -1);
                 if (ndfs == -1) {
                         perror("epoll_wait");
@@ -97,17 +103,17 @@ int main(int argc, char** argv){
                 }
 
                 for (n = 0; n < ndfs; ++n) {
+                        //info in socket needs to be read
                         if(events[n].data.fd == sockfd) {
                             if ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
-                                recvline[n] = 0;
                                 /* null terminate */
                                 if (fputs(recvline, stdout) == EOF)
                                     printf("fputs error");
                             }
                         }
+                        //info coming from STDIN
                         else {
                             if ( (n = read(STDIN_FILENO, recvline, MAXLINE)) > 0) {
-                                recvline[n] = 0;
                                 /* null terminate */
                                 if (fputs(recvline, stdout) == EOF)
                                     printf("fputs error");
@@ -122,4 +128,7 @@ int main(int argc, char** argv){
         printf("read error");
 
 }
+
+
+
 
