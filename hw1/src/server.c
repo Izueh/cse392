@@ -80,7 +80,15 @@ int main(int argc, char** argv){
                 perror("epoll_ctl: sockfd");
                 exit(EXIT_FAILURE);
         }
-        
+        ev.events = EPOLLIN;
+        ev.data.fd = STDIN_FILENO;
+        if (epoll_ctl(e_fd, EPOLL_CTL_ADD, STDIN_FILENO, &ev) \
+                        == -1){
+                perror("epoll_ctl: stdin");
+                exit(EXIT_FAILURE);
+        }
+
+
         while(1){
                 ndfs = epoll_wait(e_fd, events, sockfd, -1);
                 if (ndfs == -1) {
@@ -90,15 +98,22 @@ int main(int argc, char** argv){
 
                 for (n = 0; n < ndfs; ++n) {
                         if(events[n].data.fd == sockfd) {
-                            while ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
+                            if ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
                                 recvline[n] = 0;
                                 /* null terminate */
                                 if (fputs(recvline, stdout) == EOF)
                                     printf("fputs error");
                             }
                         }
-                        else if (events[n].events & EPOLLIN) {
-                            printf("incoming data");
+                        else {
+                            if ( (n = read(STDIN_FILENO, recvline, MAXLINE)) > 0) {
+                                recvline[n] = 0;
+                                /* null terminate */
+                                if (fputs(recvline, stdout) == EOF)
+                                    printf("fputs error");
+                                if(n == 0)
+                                    break;
+                            }
                         }
                 }
         }

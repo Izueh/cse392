@@ -15,6 +15,8 @@
 #include <stdlib.h>
 
 #include <arpa/inet.h>
+#include <readline/readline.h>
+
 
 
 #define MAXLINE 4096
