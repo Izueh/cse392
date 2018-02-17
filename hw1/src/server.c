@@ -1,15 +1,33 @@
 #include "server.h"
+#include "logger.h"
 
 int main(int argc, char** argv){
 
-    int sockfd, n, s;
+    int sockfd, n, s, opt;
     char recvline[MAXLINE + 1];
 	struct addrinfo hints;
 	struct addrinfo *res, *rp;
 	
-	if( argc !=  3 ){
-		printf("USAGE: %s address port\n", argv[0]);
+	if(argc <  3){
+		printf("%s", USAGE);
 		exit(EXIT_FAILURE);
+	}
+
+	while((opt = getopt(argc,argv,"hv")) != -1){
+		switch(opt){
+			case 'h':
+				printf("%s", USAGE);
+				exit(EXIT_SUCCESS);
+			case 'v':
+				verbose = 1;
+				break;
+			case '?':
+				printf("%s", USAGE);
+				exit(EXIT_FAILURE);
+			default:
+				printf("%s", USAGE);
+				exit(EXIT_FAILURE);
+		}
 	}
 
 	// initialize getaddr struc
@@ -23,7 +41,7 @@ int main(int argc, char** argv){
 	hints.ai_next = NULL;
 	
 	// try connections
-	s = getaddrinfo(argv[1],argv[2], &hints, &res);
+	s = getaddrinfo(argv[1], argv[2], &hints, &res);
 	if (s != 0){
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
 		exit(EXIT_FAILURE);
