@@ -11,6 +11,7 @@
 #include <sys/wait.h>
 #include <sys/select.h>
 #include <poll.h>
+#include <sys/epoll.h>
 #include <stdlib.h>
 
 #include <arpa/inet.h>
