@@ -2,11 +2,12 @@
 #include "logger.h"
 
 int main(int argc, char** argv){
-
-    int sockfd, n, s, opt;
-    char recvline[MAXLINE + 1];
+       #define MAX_EVENTS 10
+        int sockfd, n, s, opt, e_fd, ndfs;
+        char recvline[MAXLINE + 1];
         struct addrinfo hints;
         struct addrinfo *res, *rp;
+        struct epoll_event ev, events[MAX_EVENTS];
         
         if(argc <  3){
                 printf("%s", USAGE);
@@ -33,7 +34,7 @@ int main(int argc, char** argv){
         // initialize getaddr struc
         memset(&hints, 0, sizeof(struct addrinfo));
         hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_DGRAM;
+        hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_PASSIVE;
         hints.ai_protocol = 0;
         hints.ai_canonname = NULL;
@@ -50,8 +51,9 @@ int main(int argc, char** argv){
         for(rp = res; rp != NULL; rp = rp->ai_next){
                 sockfd = socket(rp->ai_family, rp->ai_socktype, 
                                 rp->ai_protocol);
-                if (sockfd == -1)
+                if (sockfd == -1){
                         continue;
+                }
                 if (connect(sockfd, rp->ai_addr, rp->ai_addrlen) != -1)
                         break;
                 close(sockfd);
@@ -63,7 +65,7 @@ int main(int argc, char** argv){
         }
 
         // epoll stuff
-        e_fd = epoll_create1(0xBAE);
+        e_fd = epoll_create1(0);
 
         if(e_fd == -1){
                 perror("epoll_create1");
@@ -73,34 +75,34 @@ int main(int argc, char** argv){
         ev.events = EPOLLIN;
         ev.data.fd = sockfd;
 
-        if (epoll_ctl(epollfd, EPOLL_CTL_ADD, sockfd, &ev) \
+        if (epoll_ctl(e_fd, EPOLL_CTL_ADD, sockfd, &ev) \
                         == -1){
                 perror("epoll_ctl: sockfd");
                 exit(EXIT_FAILURE);
         }
         
         while(1){
-                ndfs = epoll_wait(epollfd, EPOLL_CTL_ADD, sockfd, &ev);
+                ndfs = epoll_wait(e_fd, events, sockfd, -1);
                 if (ndfs == -1) {
                         perror("epoll_wait");
                         exit(EXIT_FAILURE);
                 }
 
                 for (n = 0; n < ndfs; ++n) {
-                        if(events[n].data.fd == listen_sock) {
-                                conn_sock = a
+                        if(events[n].data.fd == sockfd) {
+                            while ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
+                                recvline[n] = 0;
+                                /* null terminate */
+                                if (fputs(recvline, stdout) == EOF)
+                                    printf("fputs error");
+                            }
+                        }
+                        else if (events[n].events & EPOLLIN) {
+                            printf("incoming data");
+                        }
+                }
         }
 
-
-    char buff[] = "ayyyy";
-    write(sockfd, buff, sizeof(buff));
-
-    while ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
-        recvline[n] = 0;
-        /* null terminate */
-        if (fputs(recvline, stdout) == EOF)
-            printf("fputs error");
-    }
     if (n < 0)
         printf("read error");
 
