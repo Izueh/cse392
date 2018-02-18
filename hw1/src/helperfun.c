@@ -20,31 +20,44 @@ char* read_socket_message(int sockfd){
         msg[size] = '\0';
         strcat(msg,buff);
     }while(!strstr(msg, "\r\n\r\n"));
+
+    msg[size-4] = '\0';
     return msg;
 }
 
 
+char* split_first_word(char* msg){
+    char* first_space = strchr(msg, ' ');
+    *first_space = '\0';
+
+    return (first_space+1);
+
+}
 
 void login(char* name, int sockfd){
 
     dprintf(sockfd, "ME2U\r\n\r\n");
     char* msg = read_socket_message(sockfd);
-    if( strcmp(msg, "U2EM\r\n\r\n") != 0){        
+    if( strcmp(msg, "U2EM") != 0){        
         printf("error in u2em");
     }
     free(msg);
     dprintf(sockfd, "IAM %s\r\n\r\n", name);
     msg = read_socket_message(sockfd);
-    if( strcmp(msg, "ETAKEN\r\n\r\n") == 0){        
+    if( strcmp(msg, "ETAKEN") == 0){        
         printf("User already in use\n");
         exit(1);
-    }else if( strcmp(msg, "MAI\r\n\r\n" ) == 0) {
-        printf("Welcome to Chat Server\n");
+    }else if( strcmp(msg, "MAI" ) == 0) {
+        free(msg); 
+        msg = read_socket_message(sockfd);
+        char* tail = split_first_word(msg);
+        if(strcmp(msg, "MOTD") == 0){
+            printf("%s\n", tail);
+        }
     }else {
         printf("Error adding user");
         exit(1);
     }
-    free(msg);
 }
 
 
