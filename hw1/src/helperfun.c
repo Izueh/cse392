@@ -37,10 +37,10 @@ void socketHandler(int sockfd){
     int n = 0;
     int size = 0;
     while ( (n = read(sockfd, buff + size, MAXLINE)) > 0) {
-        printf("buff: %s n: %d\n %d\n", buff, n, size);
+        printf("in the socket while");
         size += n;
         if( strcmp((buff + (size-4)), "\r\n\r\n") == 0){
-            printf("end of loop");
+            printf("socket: %s", buff);
             break;
         }
 
@@ -48,5 +48,6 @@ void socketHandler(int sockfd){
 }
 
 void stdHandler(){
-
+    char buff[MAXLINE + 1];
+    
 }
