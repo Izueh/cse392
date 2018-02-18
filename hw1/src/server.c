@@ -103,11 +103,11 @@ int main(int argc, char** argv){
                 for (n = 0; n < ndfs; ++n) {
                         //info in socket needs to be read
                         if(events[n].data.fd == sockfd) {
-                            socketHandler(sockfd);
+                            socket_handler(sockfd);
                         }
                         //info coming from STDIN
                         else {
-                            stdHandler();
+                            std_handler();
                         }
                 }
         }

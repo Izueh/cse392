@@ -9,7 +9,7 @@
 #define MAXLINE 4096
 
 void login(char* name, int sockfd);
-void socketHandler(int socketfd);
-void stdHandler();
+void socket_handler(int socketfd);
+void std_handler();
 
 #endif
