@@ -64,7 +64,7 @@ int main(int argc, char** argv){
                 exit(EXIT_FAILURE);
         }
 
-//        login(argv[1], sockfd);
+        login(argv[1], sockfd);
 
         // epoll stuff
         e_fd = epoll_create1(0);
