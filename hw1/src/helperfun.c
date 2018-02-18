@@ -1,16 +1,19 @@
 #include "helperfun.h"
 #include <errno.h>
 
+
 void login(char* name, int sockfd){
-    int n;
-    char buff[30];
+    int n=0, total=0;
+    char buff[30]={0}, *ptr=buff;
 
     dprintf(sockfd, "ME2U\r\n\r\n");
+    do{
+        ptr+=n;
+        n = read(sockfd, ptr, sizeof(buff-total));
+        total+=n;
 
-    if( (n = read(sockfd, buff, sizeof(buff))) < 0 ){
-        printf("Error in initial server message");     
-    }
-    buff[n] = '\0';
+    }while(total!=U2EM_LEN);
+    buff[total] = '\0';
     printf(" %s %d\n", buff, strcmp(buff, "U2EM\r\n\r\n") );
     if( strcmp(buff, "U2EM\r\n\r\n") != 0){        
         printf("error in u2em");

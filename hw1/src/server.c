@@ -1,7 +1,6 @@
 #include "server.h"
 #include "logger.h"
-
-void login(char* name, int sockfd);
+#include "helperfun.h"
 
 int main(int argc, char** argv){
        #define MAX_EVENTS 10
