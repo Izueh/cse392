@@ -5,7 +5,6 @@
 int main(int argc, char** argv){
        #define MAX_EVENTS 10
         int sockfd, n, s, opt, e_fd, ndfs;
-        char recvline[MAXLINE + 1];
         struct addrinfo hints;
         struct addrinfo *res, *rp;
         struct epoll_event ev, events[MAX_EVENTS];
@@ -65,7 +64,7 @@ int main(int argc, char** argv){
                 exit(EXIT_FAILURE);
         }
 
-        login(argv[1], sockfd);
+//        login(argv[1], sockfd);
 
         // epoll stuff
         e_fd = epoll_create1(0);
@@ -104,21 +103,11 @@ int main(int argc, char** argv){
                 for (n = 0; n < ndfs; ++n) {
                         //info in socket needs to be read
                         if(events[n].data.fd == sockfd) {
-                            if ( (n = read(sockfd, recvline, MAXLINE)) > 0) {
-                                /* null terminate */
-                                if (fputs(recvline, stdout) == EOF)
-                                    printf("fputs error");
-                            }
+                            socketHandler(sockfd);
                         }
                         //info coming from STDIN
                         else {
-                            if ( (n = read(STDIN_FILENO, recvline, MAXLINE)) > 0) {
-                                /* null terminate */
-                                if (fputs(recvline, stdout) == EOF)
-                                    printf("fputs error");
-                                if(n == 0)
-                                    break;
-                            }
+                            stdHandler();
                         }
                 }
         }

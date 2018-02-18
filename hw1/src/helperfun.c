@@ -30,3 +30,23 @@ void login(char* name, int sockfd){
     }
 
 }
+
+
+void socketHandler(int sockfd){
+    char buff[MAXLINE + 1];
+    int n = 0;
+    int size = 0;
+    while ( (n = read(sockfd, buff + size, MAXLINE)) > 0) {
+        printf("buff: %s n: %d\n %d\n", buff, n, size);
+        size += n;
+        if( strcmp((buff + (size-4)), "\r\n\r\n") == 0){
+            printf("end of loop");
+            break;
+        }
+
+    }
+}
+
+void stdHandler(){
+
+}

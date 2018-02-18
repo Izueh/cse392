@@ -6,7 +6,10 @@
 #include <stdlib.h>
 
 #define U2EM_LEN 8
+#define MAXLINE 4096
 
 void login(char* name, int sockfd);
+void socketHandler(int socketfd);
+void stdHandler();
 
 #endif
