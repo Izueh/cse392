@@ -10,6 +10,7 @@
 
 void login(char* name, int sockfd);
 void socket_handler(int socketfd);
-void std_handler();
+void std_handler(int socketfd);
+
 
 #endif

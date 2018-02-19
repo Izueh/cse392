@@ -107,7 +107,7 @@ int main(int argc, char** argv){
                         }
                         //info coming from STDIN
                         else {
-                            std_handler();
+                            std_handler(sockfd);
                         }
                 }
         }

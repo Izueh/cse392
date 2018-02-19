@@ -1,5 +1,5 @@
-#ifndef serv_h
-#define serv_h
+#ifndef SERVER_H 
+#define SERVER_H
 
 #include <sys/types.h>
 #include <sys/socket.h>
