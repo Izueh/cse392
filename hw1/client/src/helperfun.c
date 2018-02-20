@@ -1,5 +1,6 @@
-#include "helperfun.h"
 #include <errno.h>
+#include "helperfun.h"
+#include "user_list.h"
 
 char* read_socket_message(int sockfd){
     char buff[MAXLINE + 1]={0}, *msg = calloc(1, MAXLINE+1);
@@ -33,8 +34,31 @@ char* split_first_word(char* msg){
     return msg;
 }
 
+int open_chat(char* user){
+    int socks[2], pid;
+    char sockfd[10]; 
+    if(socketpair(AF_UNIX,SOCK_STREAM,0,socks) < 0 ){
+        perror("socketpair: ");
+        return -1;
+        //free memory
+    }
+    if((pid=fork()) < 0){
+        perror("fork: ");
+        exit(1);
+    }else if(pid == 0){
+        close(socks[0]);
+        snprintf(sockfd, sizeof(sockfd), "%d", socks[1]);
+        execl("./chat", sockfd, user, (void *)NULL);
+        perror("execl: ");
+        exit(1);
+    }
+    return socks[0];
+
+}
+
 void command_action(char* msg, int sockfd){
-    char* tail = split_first_word(msg);
+    char* tail = split_first_word(msg), *user, *send_msg, *res;
+    user_list* chat_info;
 
     if( strcmp(msg, "/help\n") == 0){
         printf("/logout: logout\n/listu: list of online friends\n");
@@ -49,12 +73,20 @@ void command_action(char* msg, int sockfd){
     } else if( strcmp(msg, "/listu\n")  == 0 ){
         dprintf(sockfd, "LISTU\r\n\r\n");
     } else if( strcmp(msg, "/chat") == 0 ){
-        dprintf(sockfd, "TO %s", tail);
+        user = tail;
+        send_msg = split_first_word(tail);
+        dprintf(sockfd, "TO %s %s\r\n\r\n", user, send_msg);
 
-        char* msg = read_socket_message(sockfd);
-        tail = split_first_word(msg);
+        res = read_socket_message(sockfd);
+        
+        tail = split_first_word(res);
         if( strcmp(msg, "OT") == 0){
-            
+            chat_info = ul_find(user);
+            if(chat_info){
+                //this user has an open chat
+            }else{
+                open_chat(user);
+            }
         } else if( strcmp(msg, "EDNE") == 0){
             printf("User is not online");
         } else {
