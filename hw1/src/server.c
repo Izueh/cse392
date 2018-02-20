@@ -9,7 +9,7 @@ int main(int argc, char** argv){
         struct addrinfo *res, *rp;
         struct epoll_event ev, events[MAX_EVENTS];
         
-        if(argc <  3){
+        if(argc <  4){
                 printf("%s", USAGE);
                 exit(EXIT_FAILURE);
         }
@@ -42,7 +42,7 @@ int main(int argc, char** argv){
         hints.ai_next = NULL;
         
         // try connections
-        s = getaddrinfo(argv[2], argv[3], &hints, &res);
+        s = getaddrinfo(argv[argc-2], argv[argc-1], &hints, &res);
         if (s != 0){
                 fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
                 exit(EXIT_FAILURE);
@@ -60,11 +60,11 @@ int main(int argc, char** argv){
         }
 
         if (rp == NULL){
-                printf("Failed to connect to %s:%s\n",argv[1],argv[2]);
+                printf("Failed to connect to %s:%s\n",argv[argc-2],argv[argc-1]);
                 exit(EXIT_FAILURE);
         }
 
-        login(argv[1], sockfd);
+        login(argv[argc-3], sockfd);
 
         // epoll stuff
         e_fd = epoll_create1(0);

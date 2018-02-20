@@ -21,7 +21,7 @@
 
 #define MAXLINE 4096
 
-char USAGE[] = "USAGE: address port [[-v] [-h]]\n"; 
+char USAGE[] = "USAGE:[[-v] [-h]] username address port\n"; 
 
 #endif
 

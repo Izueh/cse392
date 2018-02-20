@@ -70,17 +70,18 @@ void command_action(char* msg, int sockfd){
 
 
 void login(char* name, int sockfd){
-
     dprintf(sockfd, "ME2U\r\n\r\n");
     char* msg = read_socket_message(sockfd);
     if( strcmp(msg, "U2EM") != 0){        
         printf("error in u2em");
+        exit(1);
     }
     free(msg);
     dprintf(sockfd, "IAM %s\r\n\r\n", name);
     msg = read_socket_message(sockfd);
     if( strcmp(msg, "ETAKEN") == 0){        
         printf("User already in use\n");
+        free(msg);
         exit(1);
     }else if( strcmp(msg, "MAI" ) == 0) {
         free(msg); 
@@ -91,6 +92,7 @@ void login(char* name, int sockfd){
         }
     }else {
         printf("Error adding user");
+        free(msg);
         exit(1);
     }
 }
