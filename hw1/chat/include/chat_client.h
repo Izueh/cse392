@@ -1,6 +1,5 @@
-#ifndef SERVER_H 
-#define SERVER_H
-
+#ifndef CHAT_CLIENT_H
+#define CHAT_CLIENT_H
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -15,13 +14,5 @@
 #include <stdlib.h>
 
 #include <arpa/inet.h>
-#include <readline/readline.h>
-
-
-
-#define MAXLINE 4096
-
-char USAGE[] = "USAGE:[[-v] [-h]] username address port\n"; 
 
 #endif
-

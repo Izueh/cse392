@@ -1,17 +1,24 @@
 CC := gcc
-SRCD := src
-BLDD := build
+SRCD_CLIENT := client/src
+SRCD_CHAT:= chat/src
+BLDD_CLIENT := client/build
+BLDD_CHAT := chat/build
 BIND := bin
-INCD := include
+INCD_CLIENT := client/include
+INCD_CHAT := chat/include
 
-ALL_SRCF := $(shell find $(SRCD) -type f -name *.c)
-ALL_OBJF := $(patsubst $(SRCD)/%,$(BLDD)/%,$(ALL_SRCF:.c=.o))
-FUNC_FILES := $(filter-out build/main.o, $(ALL_OBJF))
-TEST_SRC := $(shell find $(TSTD) -type f -name *.c)
+ALL_CLIENT_SRCF := $(shell find $(SRCD_CLIENT) -type f -name *.c)
+ALL_CHAT_SRCF := $(shell find $(SRCD_CHAT) -type f -name *.c)
+ALL_CLIENT_OBJF := $(patsubst $(SRCD_CLIENT)/%,$(BLDD_CLIENT)/%,$(ALL_CLIENT_SRCF:.c=.o))
+ALL_CHAT_OBJF := $(patsubst $(SRCD_CHAT)/%,$(BLDD_CHAT)/%,$(ALL_CHAT_SRCF:.c=.o))
+CLIENT_FUNC_FILES := $(filter-out client/build/main.o, $(ALL_CLIENT_OBJF))
+CHAT_FUNC_FILES := $(filter-out chat/build/main.o, $(ALL_CHAT_OBJF))
 
-INC := -I $(INCD)
+INC_CLIENT := -I $(INCD_CLIENT)
+INC_CHAT := -I $(INCD_CHAT)
 
-EXEC := client 
+EXEC_CLIENT := client
+EXEC_CHAT:= chat
 
 CFLAGS := -Wall -Werror
 DFLAGS := -g -DDEBUG -DCOLOR
@@ -24,16 +31,22 @@ CFLAGS += $(STD)
 debug: CFLAGS += $(DFLAGS)
 debug: all
 
-all: setup $(EXEC) $(TEST_EXEC)
+all: setup $(EXEC_CLIENT) $(EXEC_CHAT)
 
 setup:
-	mkdir -p bin build
+	mkdir -p bin client/build chat/build
 
-$(EXEC): $(ALL_OBJF)
+$(EXEC_CLIENT): $(ALL_CLIENT_OBJF)
 	$(CC) $^ -o $(BIND)/$@ $(READLINE)
 
-$(BLDD)/%.o: $(SRCD)/%.c
-	$(CC) $(CFLAGS) $(INC) -c -o $@ $<
+$(BLDD_CLIENT)/%.o: $(SRCD_CLIENT)/%.c
+	$(CC) $(CFLAGS) $(INC_CLIENT) -c -o $@ $<
+
+$(EXEC_CHAT): $(ALL_CHAT_OBJF)
+	$(CC) $^ -o $(BIND)/$@ $(READLINE)
+
+$(BLDD_CHAT)/%.o: $(SRCD_CHAT)/%.c
+	$(CC) $(CFLAGS) $(INC_CHAT) -c -o $@ $<
 
 clean:
-	$(RM) -r $(BLDD) $(BIND)
+	$(RM) -r $(BLDD_CLIENT) $(BLDD_CHAT) $(BIND)

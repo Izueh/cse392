@@ -1,14 +1,15 @@
-
+#include "chat_client.h"
 
 int main(int argc, char** argv){
-    
+    #define MAX_EVENTS 10
     if(argc <3){
         printf("invalid amount of arguments\n");
         exit(1);
     }
 
-    int sockfd = atoi(argv[1]);
-    char* name = argv[2];
+    int sockfd = atoi(argv[1]), e_fd, n, ndfs;
+    //char* name = argv[2];
+    struct epoll_event ev, events[MAX_EVENTS];
     
     e_fd = epoll_create1(0xBAE);
 
@@ -45,13 +46,6 @@ int main(int argc, char** argv){
 
                 for (n = 0; n < ndfs; ++n) {
                         //info in socket needs to be read
-                        if(events[n].data.fd == sockfd) {
-                            socket_handler(sockfd);
-                        }
-                        //info coming from STDIN
-                        else {
-                            std_handler(sockfd);
-                        }
                 }
         }
 
