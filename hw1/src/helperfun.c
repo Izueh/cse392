@@ -43,6 +43,7 @@ void command_action(char* msg, int sockfd){
         char* msg = read_socket_message(sockfd);
         if( strcmp(msg, "EYB") == 0 ){
             printf("thank you\n");
+            free(msg);
             exit(0);
         }
     } else if( strcmp(msg, "/listu\n")  == 0 ){
@@ -58,16 +59,15 @@ void command_action(char* msg, int sockfd){
             printf("User is not online");
         } else {
             printf("error in sending message");
+            free(msg);
             exit(1);
         }
-
 
     } else {
         printf("invalid command");
         exit(1); 
     }
 }
-
 
 void login(char* name, int sockfd){
     dprintf(sockfd, "ME2U\r\n\r\n");
