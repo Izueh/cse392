@@ -77,8 +77,7 @@ int main(int argc, char** argv){
     //add Server Socket to the epoll
     ev.events = EPOLLIN;
     ev.data.fd = sockfd;
-    if (epoll_ctl(e_fd, EPOLL_CTL_ADD, sockfd, &ev) \
-                    == -1){
+    if (epoll_ctl(e_fd, EPOLL_CTL_ADD, sockfd, &ev) == -1){
         perror("epoll_ctl: sockfd");
         exit(EXIT_FAILURE);
     }
