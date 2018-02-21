@@ -33,7 +33,6 @@ user_list* open_chat(char* user){
 void command_action(char* msg, int sockfd){
     char* tail = split_first_word(msg), *user, *send_msg, *res;
     user_list* chat_info;
-    ssize_t count;
 
     if( strcmp(msg, "/help\n") == 0){
         printf("/logout: logout\n/listu: list of online friends\n");
@@ -55,7 +54,7 @@ void command_action(char* msg, int sockfd){
         res = read_socket_message(sockfd, "\r\n\r\n");
         
         tail = split_first_word(res);
-        if( strcmp(msg, "OT") == 0){
+        if( strcmp(res, "OT") == 0){
             chat_info = ul_find(user);
             if(chat_info){
                 //this user has an open chat
@@ -65,10 +64,8 @@ void command_action(char* msg, int sockfd){
                    //free and handle error 
                }
                ul_add(chat_info);
-               count = write(chat_info->fd,send_msg,strlen(send_msg));
-               if(count < 0){
-                   //something wrong
-               }
+               dprintf(chat_info->fd,"TO %s %s\r\n\r\n",\
+                       chat_info->user, send_msg);
             }
         } else if( strcmp(msg, "EDNE") == 0){
             printf("User is not online");
@@ -118,8 +115,10 @@ void socket_handler(int sockfd){
 }
 
 void std_handler(int sockfd){
-    char* buff = calloc(1, MAXLINE+1);
+    char* buff = calloc(1, MAXLINE+1),*pos;
     fgets(buff, MAXLINE+1, stdin);
+    if ((pos=strchr(buff, '\n')) != NULL)
+        *pos = '\0';
     command_action(buff, sockfd);
 }
 

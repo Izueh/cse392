@@ -18,7 +18,7 @@ char* read_socket_message(int sockfd, const char* const end_msg){
         size += n;
         if(size > (allocated*MAXLINE)){
             allocated += 1;
-            msg = realloc(msg, allocated*MAXLINE+1);
+            msg = realloc(msg, (allocated*MAXLINE)+1);
         }
         msg[size] = '\0';
         strcat(msg,buff);
@@ -36,5 +36,4 @@ char* split_first_word(char* msg){
     }
     return msg;
 }
-
 

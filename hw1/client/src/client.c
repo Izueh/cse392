@@ -67,7 +67,7 @@ int main(int argc, char** argv){
     login(argv[argc-3], sockfd);
 
     // epoll stuff
-    e_fd = epoll_create1(0xCAFE);
+    e_fd = epoll_create1(0);
 
     if(e_fd == -1){
         perror("epoll_create1");
@@ -91,7 +91,7 @@ int main(int argc, char** argv){
         exit(EXIT_FAILURE);
     }
 
-    while(1){
+    while(0xCAFE){
             //wait for signal on either STDIN or Socket
         ndfs = epoll_wait(e_fd, events, sockfd, -1);
         if (ndfs == -1) {

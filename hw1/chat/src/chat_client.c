@@ -1,4 +1,5 @@
 #include "chat_client.h"
+#include "buf.h"
 
 int main(int argc, char** argv){
     #define MAX_EVENTS 10
@@ -8,11 +9,21 @@ int main(int argc, char** argv){
     }
 
     int sockfd = atoi(argv[1]), e_fd, n, ndfs;
-    char* name = argv[2];
+    char* name = argv[2],*initial_msg,*initializer,*message,*sender;
     printf("Now chatting with %s\n", name);
     struct epoll_event ev, events[MAX_EVENTS];
+    initial_msg = read_socket_message(sockfd, "\r\n\r\n");
+    initializer = split_first_word(initial_msg);
+    sender = split_first_word(initializer);
+    message = split_first_word(sender);
     
-    e_fd = epoll_create1(0xBAE);
+    if(!strcmp(initializer, "TO"))
+        printf("> %s\n", message);
+
+    if(!strcmp(initializer, "FROM"))
+        printf("< %s\n", message);
+    
+    e_fd = epoll_create1(0);
 
     if(e_fd == -1){
         perror("epoll_create1");
@@ -35,7 +46,7 @@ int main(int argc, char** argv){
         exit(EXIT_FAILURE);
     }
 
-    while(1){
+    while(0xDEAD){
             //wait for signal on either STDIN or Socket
         ndfs = epoll_wait(e_fd, events, sockfd, -1);
         if (ndfs == -1) {
@@ -47,7 +58,5 @@ int main(int argc, char** argv){
             //info in socket needs to be read
         }
     }
-
-
-
 }
+
