@@ -33,10 +33,11 @@ user_list* open_chat(char* user){
 void command_action(char* msg, int sockfd){
     char* tail = split_first_word(msg), *user, *send_msg, *res;
     user_list* chat_info;
+    printf("input: %s", msg);
 
-    if( strcmp(msg, "/help\n") == 0){
+    if( strcmp(msg, "/help") == 0){
         printf("/logout: logout\n/listu: list of online friends\n");
-    } else if( strcmp(msg, "/logout\n") == 0){
+    } else if( strcmp(msg, "/logout") == 0){
         dprintf(sockfd, "BYE\r\n\r\n");
         char* msg = read_socket_message(sockfd, "\r\n\r\n");
         if( strcmp(msg, "EYB") == 0 ){
@@ -44,7 +45,7 @@ void command_action(char* msg, int sockfd){
             free(msg);
             exit(0);
         }
-    } else if( strcmp(msg, "/listu\n")  == 0 ){
+    } else if( strcmp(msg, "/listu")  == 0 ){
         dprintf(sockfd, "LISTU\r\n\r\n");
     } else if( strcmp(msg, "/chat") == 0 ){
         user = tail;
@@ -76,7 +77,7 @@ void command_action(char* msg, int sockfd){
         }
 
     } else {
-        printf("invalid command");
+        printf("invalid command\n");
         exit(1); 
     }
 }

@@ -2,5 +2,6 @@
 *~*
 client/build/*
 chat/build/*
-*/*.o
+modules/build/*
+*.o
 bin/*
