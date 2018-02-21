@@ -14,12 +14,10 @@ int main(int argc, char** argv){
     struct epoll_event ev, events[MAX_EVENTS];
     sigset_t set;
         
-    
     if(argc <  4){
         printf("%s", USAGE);
         exit(EXIT_FAILURE);
     }
-
     while((opt = getopt(argc,argv,"hv")) != -1){
         switch(opt){
             case 'h':
@@ -46,9 +44,6 @@ int main(int argc, char** argv){
     hints.ai_canonname = NULL;
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
-    
-
-    
 
     // try connections
     s = getaddrinfo(argv[argc-2], argv[argc-1], &hints, &res);
@@ -112,8 +107,6 @@ int main(int argc, char** argv){
     sigaddset(&set, SIGPIPE);
     sigaddset(&set, SIGTERM);
 
-
-
     while(0xCAFE){
         //wait for signal on either STDIN or Socket
         ndfs = epoll_pwait(e_fd, events, sockfd, -1, &set);
@@ -124,6 +117,7 @@ int main(int argc, char** argv){
         if(errno == EINTR){
             if(sigismember(&set, SIGINT) | sigismember(&set, SIGTERM)){
                 ul_clean();
+                logout(sockfd);
                 exit(EXIT_SUCCESS);
             }
             if(sigismember(&set, SIGCHLD)){
@@ -144,6 +138,5 @@ int main(int argc, char** argv){
             }
         }
     }
-
 }
 
