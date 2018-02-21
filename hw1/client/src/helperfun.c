@@ -18,7 +18,7 @@ user_list* open_chat(char* user){
     }else if(pid == 0){
         close(socks[0]);
         snprintf(sockfd, sizeof(sockfd), "%d", socks[1]);
-        execlp("xterm","xterm", "-e", "chat", sockfd, user, (void *)NULL);
+        execlp("xterm","xterm", "-e", "./chat", sockfd, user, (void *)NULL);
         perror("execl: ");
         exit(1);
     }

@@ -9,11 +9,14 @@ char* read_socket_message(int sockfd, const char* const end_msg){
     char buff[MAXLINE + 1]={0}, *msg = calloc(1, MAXLINE+1);
     int n = 0, size = 0, allocated=1;
     do {
+        retry:
         n = read(sockfd, buff , MAXLINE);
         if( n < 0){
-            perror("read: ");
+            perror("read");
             exit(EXIT_FAILURE);
         }
+        if (errno == EINTR)
+           goto retry;
         buff[n] = '\0';
         size += n;
         if(size > (allocated*MAXLINE)){

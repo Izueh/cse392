@@ -9,18 +9,17 @@ int main(int argc, char** argv){
     }
 
     int sockfd = atoi(argv[1]), e_fd, n, ndfs;
-    char* name = argv[2],*initial_msg,*initializer,*message,*sender;
+    char* name = argv[2],*initial_msg,*message,*sender;
     printf("Now chatting with %s\n", name);
     struct epoll_event ev, events[MAX_EVENTS];
     initial_msg = read_socket_message(sockfd, "\r\n\r\n");
-    initializer = split_first_word(initial_msg);
-    sender = split_first_word(initializer);
+    sender = split_first_word(initial_msg);
     message = split_first_word(sender);
     
-    if(!strcmp(initializer, "TO"))
+    if(!strcmp(initial_msg, "TO"))
         printf("> %s\n", message);
 
-    if(!strcmp(initializer, "FROM"))
+    if(!strcmp(initial_msg, "FROM"))
         printf("< %s\n", message);
     
     e_fd = epoll_create1(0);
