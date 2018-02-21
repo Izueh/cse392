@@ -11,6 +11,7 @@ struct user_list{
 typedef struct user_list user_list;
 void ul_add(user_list* node);
 user_list* ul_find(char* name);
-void clean();
+void ul_clean_child();
+void ul_clean();
 #endif
 

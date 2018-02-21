@@ -8,6 +8,8 @@ int main(int argc, char** argv){
     struct addrinfo hints;
     struct addrinfo *res, *rp;
     struct epoll_event ev, events[MAX_EVENTS];
+    sigset_t set;
+        
     
     if(argc <  4){
         printf("%s", USAGE);
@@ -41,6 +43,9 @@ int main(int argc, char** argv){
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
     
+
+    
+
     // try connections
     s = getaddrinfo(argv[argc-2], argv[argc-1], &hints, &res);
     if (s != 0){
@@ -95,13 +100,33 @@ int main(int argc, char** argv){
         perror("epoll_ctl: stdin");
         exit(EXIT_FAILURE);
     }
+    
+    // signald stuff
+    sigemptyset(&set);
+    sigaddset(&set, SIGCHLD);
+    sigaddset(&set, SIGINT);
+    sigaddset(&set, SIGPIPE);
+    sigaddset(&set, SIGTERM);
+
+
 
     while(0xCAFE){
-            //wait for signal on either STDIN or Socket
-        ndfs = epoll_wait(e_fd, events, sockfd, -1);
+        //wait for signal on either STDIN or Socket
+        ndfs = epoll_pwait(e_fd, events, sockfd, -1, &set);
         if (ndfs == -1) {
             perror("epoll_wait");
             exit(EXIT_FAILURE);
+        }
+        if(errno == EINTR){
+            if(sigismember(&set, SIGINT) | sigismember(&set, SIGTERM)){
+                ul_clean();
+                exit(EXIT_SUCCESS);
+            }
+            if(sigismember(&set, SIGCHLD)){
+                ul_clean_child();
+            }
+            errno = 0;
+            continue;
         }
 
         for (n = 0; n < ndfs; ++n) {
