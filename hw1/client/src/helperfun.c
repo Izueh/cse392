@@ -30,10 +30,10 @@ user_list* open_chat(char* user){
 
 }
 
+//we should split this up into multiple function calls
 void command_action(char* msg, int sockfd){
     char* tail = split_first_word(msg), *user, *send_msg, *res;
     user_list* chat_info;
-    printf("input: %s", msg);
 
     if( strcmp(msg, "/help") == 0){
         printf("/logout: logout\n/listu: list of online friends\n");
@@ -111,8 +111,31 @@ void login(char* name, int sockfd){
 }
 
 void socket_handler(int sockfd){
-    char* msg = read_socket_message(sockfd, "\r\n\r\n");
-    printf("socket: %s", msg);
+    char* msg,*tail,*user;
+    user_list* chat_info;
+    msg = read_socket_message(sockfd, "\r\n\r\n");
+    tail = split_first_word(msg);
+    if(!strcmp(msg, "UTSIL")){
+        printf("Online Users: \n"); 
+        while((user=tail)){
+            tail = split_first_word(tail);
+            printf("%s\n",user);
+        }
+    }else if(!strcmp(msg, "FROM")){
+        user = tail;
+        tail = split_first_word(tail);
+        chat_info = ul_find(user);
+        if(chat_info){
+        //chat is open relay message
+
+
+        }else{
+        //open chat with new message
+        chat_info = open_chat(user);
+        dprintf(chat_info->fd,"FROM %s %s\r\n\r\n",chat_info->user,tail);
+        }
+    }
+    free(msg);
 }
 
 void std_handler(int sockfd){

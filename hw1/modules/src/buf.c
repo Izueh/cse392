@@ -37,6 +37,6 @@ char* split_first_word(char* msg){
         *first_space = '\0';
         return (first_space+1);
     }
-    return msg;
+    return NULL;
 }
 
