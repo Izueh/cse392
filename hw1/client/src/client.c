@@ -1,6 +1,10 @@
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "client.h"
 #include "logger.h"
 #include "helperfun.h"
+#include "user_list.h"
 
 int main(int argc, char** argv){
     #define MAX_EVENTS 10

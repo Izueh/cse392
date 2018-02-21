@@ -1,5 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 #include "user_list.h"
 
 
@@ -43,7 +46,7 @@ user_list* ul_find(char* name){
     return NULL;
 }
 
-void ul_clean_childs(){
+void ul_clean_child(){
     user_list *walk=head, *prev=NULL;
     int status;
     while(walk){
