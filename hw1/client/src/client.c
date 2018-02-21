@@ -54,7 +54,7 @@ int main(int argc, char** argv){
     }
 
     for(rp = res; rp != NULL; rp = rp->ai_next){
-        struct timeval to = {5, 0};
+        struct timeval to = {50, 0};
         sockfd = socket(rp->ai_family, rp->ai_socktype, 
                         rp->ai_protocol);
         if (sockfd == -1){
