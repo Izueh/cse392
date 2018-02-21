@@ -101,7 +101,7 @@ void login(char* name, int sockfd){
         msg = read_socket_message(sockfd, "\r\n\r\n");
         char* tail = split_first_word(msg);
         if(strcmp(msg, "MOTD") == 0){
-            printf("%s\n", tail);
+            printf("\e[32mMessage of the Day: \e[1m%s\e[0m\n", tail);
         }
     }else {
         printf("Error adding user");
