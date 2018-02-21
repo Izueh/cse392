@@ -1,4 +1,6 @@
 *.sw*
 *~*
-build/*
+client/build/*
+chat/build/*
+*.o
 bin/*
