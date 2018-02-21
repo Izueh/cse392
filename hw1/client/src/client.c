@@ -49,9 +49,14 @@ int main(int argc, char** argv){
     }
 
     for(rp = res; rp != NULL; rp = rp->ai_next){
+        struct timeval to = {5, 0};
         sockfd = socket(rp->ai_family, rp->ai_socktype, 
                         rp->ai_protocol);
         if (sockfd == -1){
+            continue;
+        }
+        if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*)&to, sizeof(struct timeval)) == -1) {
+            printf("Error in setsockopt\n");
             continue;
         }
         if (connect(sockfd, rp->ai_addr, rp->ai_addrlen) != -1)

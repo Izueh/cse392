@@ -10,8 +10,8 @@ char* read_socket_message(int sockfd, const char* const end_msg){
     int n = 0, size = 0, allocated=1;
     do {
         n = read(sockfd, buff , MAXLINE);
-        if( n < 0){
-            perror("read: ");
+        if( n <= 0){
+            perror("timeout");
             exit(EXIT_FAILURE);
         }
         buff[n] = '\0';
