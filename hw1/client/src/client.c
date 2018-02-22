@@ -4,10 +4,10 @@
 
 int main(int argc, char** argv){
     #define MAX_EVENTS 10
-    int sockfd, n, s, opt, e_fd, ndfs;
+    int sockfd, n, s, opt, ndfs;
     struct addrinfo hints;
     struct addrinfo *res, *rp;
-    struct epoll_event ev, events[MAX_EVENTS];
+    struct epoll_event events[MAX_EVENTS];
     
     if(argc <  4){
         printf("%s", USAGE);
@@ -106,12 +106,15 @@ int main(int argc, char** argv){
 
         for (n = 0; n < ndfs; ++n) {
             //info in socket needs to be read
-            if(events[n].data.fd == sockfd) {
-                socket_handler(sockfd);
+            printf("data coming in\n");
+            if(events[n].data.fd == STDIN_FILENO) {
+                std_handler(sockfd);
             }
             //info coming from STDIN
-            else {
-                std_handler(sockfd);
+            else if(events[n].data.fd == sockfd) {
+                socket_handler(sockfd);
+            }else{
+                chat_handler(events[n].data.fd, sockfd);
             }
         }
     }

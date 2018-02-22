@@ -26,8 +26,7 @@ char* read_socket_message(int sockfd, const char* const end_msg){
         msg[size] = '\0';
         strcat(msg,buff);
     }while(!strstr(msg, end_msg));
-
-    msg[size-4] = '\0';
+    msg[size-strlen(end_msg)] = '\0'; 
     return msg;
 }
 

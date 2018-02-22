@@ -11,6 +11,7 @@
 #define MAXLINE 4096
 
 void login(char* name, int sockfd);
+void chat_handler(int sockfd, int wrtFD);
 void socket_handler(int socketfd);
 void std_handler(int socketfd);
 

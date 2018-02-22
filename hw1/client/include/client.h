@@ -15,11 +15,14 @@
 #include <stdlib.h>
 
 #include <arpa/inet.h>
-
+#include "user_list.h"
 
 #define MAXLINE 4096
 
 char USAGE[] = "USAGE:[[-v] [-h]] username address port\n"; 
+struct epoll_event ev;
+int e_fd;
+
 
 #endif
 

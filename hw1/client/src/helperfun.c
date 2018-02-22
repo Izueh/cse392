@@ -1,7 +1,13 @@
 #include <errno.h>
+#include <sys/epoll.h>
 #include "helperfun.h"
 #include "user_list.h"
 #include "buf.h"
+
+
+extern int e_fd;
+extern struct epoll_event ev;
+
 
 user_list* open_chat(char* user){
     int socks[2], pid;
@@ -22,6 +28,14 @@ user_list* open_chat(char* user){
         perror("execl: ");
         exit(1);
     }
+
+    ev.events = EPOLLIN;
+    ev.data.fd = socks[0];
+    if(epoll_ctl(e_fd, EPOLL_CTL_ADD, socks[0], &ev) == -1){
+        perror("epoll_ctl: sockfd");
+        exit(EXIT_FAILURE);
+    }
+
     new_chat->fd = socks[0];
     new_chat->pid = pid;
     new_chat->user = strdup(user);
@@ -110,10 +124,27 @@ void login(char* name, int sockfd){
     }
 }
 
+void chat_handler(int sockfd, int wrtFD){
+    char* msg, tail;
+    msg = read_socket_message(sockfd, "\n");
+    dprintf(wrtFD, "%s\r\n\r\n", msg);
+    free(msg);
+    msg = read_socket_message(wrtFD, "\r\n\r\n");
+    tail = split_first_word(res);
+    if( strcmp(msg, "EDNE") == 0){
+        printf("User is not online");
+    } else {
+        printf("error in sending message");
+        free(msg);
+        exit(1);
+    }
+}
+
 void socket_handler(int sockfd){
     char* msg,*tail,*user;
     user_list* chat_info;
     msg = read_socket_message(sockfd, "\r\n\r\n");
+    printf("MESSAGE INCOMING: %s\n", msg);
     tail = split_first_word(msg);
     if(!strcmp(msg, "UTSIL")){
         printf("Online Users: \n"); 
@@ -127,20 +158,20 @@ void socket_handler(int sockfd){
         chat_info = ul_find(user);
         if(chat_info){
         //chat is open relay message
-
-
         }else{
         //open chat with new message
         chat_info = open_chat(user);
         dprintf(chat_info->fd,"FROM %s %s\r\n\r\n",chat_info->user,tail);
         }
+    }else if(!strcmp(msg, "TO")){
+        printf("tail message: %s\n", tail);
     }
     free(msg);
 }
 
 void std_handler(int sockfd){
-    char* buff = calloc(1, MAXLINE+1),*pos;
-    fgets(buff, MAXLINE+1, stdin);
+    char* pos;
+    char* buff = read_socket_message(STDIN_FILENO, "\n");
     if ((pos=strchr(buff, '\n')) != NULL)
         *pos = '\0';
     command_action(buff, sockfd);
