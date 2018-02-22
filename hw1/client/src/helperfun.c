@@ -157,6 +157,11 @@ void socket_handler(int sockfd){
     char* msg,*tail,*user;
     user_list* chat_info;
     msg = read_socket_message(sockfd, "\r\n\r\n");
+    if(!*msg){
+        printf("server closed connection");
+        free(msg);
+        exit(EXIT_FAILURE);
+    }
     tail = split_first_word(msg);
     if(!strcmp(msg, "UTSIL")){
         printf("Online Users: \n"); 
