@@ -77,6 +77,8 @@ void command_action(char* msg, int sockfd){
             chat_info = ul_find(user);
             if(chat_info){
                 //this user has an open chat
+               dprintf(chat_info->fd,"TO %s %s\r\n\r\n",\
+                       chat_info->user, send_msg);
             }else{
                chat_info = open_chat(user);
                if(!chat_info){
@@ -137,8 +139,8 @@ void chat_handler(int sockfd, int wrtFD){
     split_first_word(msg);
     if( strcmp(msg, "EDNE") == 0){
         printf("User is not online");
-    } else {
-        printf("error in sending message");
+    } else if(strcmp(msg, "OT")){
+        printf("error in sending message\n");
         free(msg);
         exit(1);
     }
@@ -148,7 +150,6 @@ void socket_handler(int sockfd){
     char* msg,*tail,*user;
     user_list* chat_info;
     msg = read_socket_message(sockfd, "\r\n\r\n");
-    printf("MESSAGE INCOMING: %s\n", msg);
     tail = split_first_word(msg);
     if(!strcmp(msg, "UTSIL")){
         printf("Online Users: \n"); 
@@ -162,9 +163,12 @@ void socket_handler(int sockfd){
         chat_info = ul_find(user);
         if(chat_info){
         //chat is open relay message
+            dprintf(chat_info->fd,"FROM %s %s\r\n\r\n",chat_info->user,tail);
+            dprintf(sockfd, "MROF %s\r\n\r\n", chat_info->user);
         }else{
         //open chat with new message
         chat_info = open_chat(user);
+        ul_add(chat_info);
         dprintf(chat_info->fd,"FROM %s %s\r\n\r\n",chat_info->user,tail);
         }
     }else if(!strcmp(msg, "TO")){

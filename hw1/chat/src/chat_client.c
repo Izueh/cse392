@@ -56,11 +56,14 @@ int main(int argc, char** argv){
         for (n = 0; n < ndfs; ++n) {
             //info in socket needs to be read
             if(events[n].data.fd == sockfd) {
-                printf("socket");
+                char* msg = read_socket_message(sockfd, "\r\n\r\n"); 
+                sender = split_first_word(msg);
+                message = split_first_word(sender);
+                printf("> %s\n", message);
+
             }else{
                 char* msg = read_socket_message(STDIN_FILENO, "\n");
-                printf("MESSAGE: %s\n", msg);
-                dprintf(sockfd, "TO %s %s\r\n\r\n", name, msg);
+                dprintf(sockfd, "TO %s %s\n", name, msg);
 
             }
         }

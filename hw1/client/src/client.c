@@ -129,7 +129,6 @@ int main(int argc, char** argv){
 
         for (n = 0; n < ndfs; ++n) {
             //info in socket needs to be read
-            printf("data coming in\n");
             if(events[n].data.fd == STDIN_FILENO) {
                 std_handler(sockfd);
             }
