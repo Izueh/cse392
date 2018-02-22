@@ -63,6 +63,11 @@ int main(int argc, char** argv){
 
             }else{
                 char* msg = read_socket_message(STDIN_FILENO, "\n");
+                if(!strcmp(msg,"/close")){
+                    close(sockfd);
+                    exit(EXIT_SUCCESS);
+
+                }
                 dprintf(sockfd, "TO %s %s\n", name, msg);
 
             }

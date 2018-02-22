@@ -1,5 +1,7 @@
 #include <errno.h>
 #include <sys/epoll.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "helperfun.h"
 #include "user_list.h"
 #include "buf.h"
@@ -9,18 +11,17 @@ extern int e_fd;
 extern struct epoll_event ev;
 
 
-user_list* open_chat(char* user){
+void open_chat(char* user, user_list* chat_info){
     int socks[2], pid;
     char sockfd[10]; 
-    user_list* new_chat = malloc(sizeof(user_list));
     if(socketpair(AF_UNIX,SOCK_STREAM,0,socks) < 0 ){
         perror("socketpair: ");
-        return NULL;
+        exit(EXIT_FAILURE);
         //free memory
     }
     if((pid=fork()) < 0){
         perror("fork: ");
-        return NULL; 
+        exit(EXIT_FAILURE);
     }else if(pid == 0){
         close(socks[0]);
         snprintf(sockfd, sizeof(sockfd), "%d", socks[1]);
@@ -28,19 +29,9 @@ user_list* open_chat(char* user){
         perror("execl: ");
         exit(1);
     }
-
-    ev.events = EPOLLIN;
-    ev.data.fd = socks[0];
-    if(epoll_ctl(e_fd, EPOLL_CTL_ADD, socks[0], &ev) == -1){
-        perror("epoll_ctl: sockfd");
-        exit(EXIT_FAILURE);
-    }
-
-    new_chat->fd = socks[0];
-    new_chat->pid = pid;
-    new_chat->user = strdup(user);
-    new_chat->next = NULL;
-    return new_chat;
+    close(socks[1]);
+    chat_info->fd = socks[0];
+    chat_info->pid = pid;
 
 }
 
@@ -53,11 +44,11 @@ void logout(int sockfd){
         close(sockfd);
     }
 }
+
 //we should split this up into multiple function calls
 void command_action(char* msg, int sockfd){
-    char* tail = split_first_word(msg), *user, *send_msg, *res;
-    user_list* chat_info;
-
+    char* tail = split_first_word(msg), *user, *send_msg;
+    user_list* user_info;
     if( strcmp(msg, "/help") == 0){
         printf("/logout: logout\n/listu: list of online friends\n");
     } else if( strcmp(msg, "/logout") == 0){
@@ -68,37 +59,14 @@ void command_action(char* msg, int sockfd){
     } else if( strcmp(msg, "/chat") == 0 ){
         user = tail;
         send_msg = split_first_word(tail);
+        user_info = malloc(sizeof(user_list));
+        memset(user_info,0, sizeof(user_list));
         dprintf(sockfd, "TO %s %s\r\n\r\n", user, send_msg);
-
-        res = read_socket_message(sockfd, "\r\n\r\n");
-        
-        tail = split_first_word(res);
-        if( strcmp(res, "OT") == 0){
-            chat_info = ul_find(user);
-            if(chat_info){
-                //this user has an open chat
-               dprintf(chat_info->fd,"TO %s %s\r\n\r\n",\
-                       chat_info->user, send_msg);
-            }else{
-               chat_info = open_chat(user);
-               if(!chat_info){
-                   //free and handle error 
-               }
-               ul_add(chat_info);
-               dprintf(chat_info->fd,"TO %s %s\r\n\r\n",\
-                       chat_info->user, send_msg);
-            }
-        } else if( strcmp(msg, "EDNE") == 0){
-            printf("User is not online");
-        } else {
-            printf("error in sending message");
-            free(msg);
-            exit(1);
-        }
-
+        user_info->user = strdup(user);
+        user_info->initial_msg = strdup(send_msg);
+        ul_add(user_info);
     } else {
-        printf("invalid command\n");
-        exit(1); 
+        printf("\e[31m\e[1minvalid command\e[0m\n");
     }
 }
 
@@ -132,17 +100,53 @@ void login(char* name, int sockfd){
 
 void chat_handler(int sockfd, int wrtFD){
     char* msg;
+    user_list* user;
     msg = read_socket_message(sockfd, "\n");
+    if(!*msg){
+        user = ul_remove(sockfd);
+        close(user->fd);
+        waitpid(user->pid,NULL,0);
+        free(msg);
+        free(user);
+        return;
+    }
     dprintf(wrtFD, "%s\r\n\r\n", msg);
     free(msg);
-    msg = read_socket_message(wrtFD, "\r\n\r\n");
-    split_first_word(msg);
-    if( strcmp(msg, "EDNE") == 0){
-        printf("User is not online");
-    } else if(strcmp(msg, "OT")){
-        printf("error in sending message\n");
-        free(msg);
-        exit(1);
+    ev.events = EPOLLIN;
+    ev.data.fd = sockfd;
+    if(epoll_ctl(e_fd, EPOLL_CTL_DEL, sockfd, &ev) < 0){
+        perror("epoll_ctl: ot");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void ot(char* user){
+    user_list* chat_info = ul_find(user);
+    if(chat_info && chat_info->fd){
+        //this user has an open chat
+        if(chat_info->initial_msg){
+            dprintf(chat_info->fd,"TO %s %s\r\n\r\n", chat_info->user,\
+                    chat_info->initial_msg);
+            free(chat_info->initial_msg);
+            chat_info->initial_msg = NULL;
+        }
+    }else{
+       open_chat(user, chat_info);
+       if(!chat_info){
+           
+           //free and handle error 
+       }
+       dprintf(chat_info->fd,"TO %s %s\r\n\r\n",chat_info->user,\
+               chat_info->initial_msg);
+       free(chat_info->initial_msg);
+       chat_info->initial_msg = NULL;
+       
+    }
+    ev.events = EPOLLIN;
+    ev.data.fd = chat_info->fd;
+    if(epoll_ctl(e_fd, EPOLL_CTL_ADD, chat_info->fd, &ev) == -1){
+        perror("epoll_ctl: sockfd");
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -164,15 +168,32 @@ void socket_handler(int sockfd){
         if(chat_info){
         //chat is open relay message
             dprintf(chat_info->fd,"FROM %s %s\r\n\r\n",chat_info->user,tail);
-            dprintf(sockfd, "MROF %s\r\n\r\n", chat_info->user);
+            dprintf(sockfd, "MORF %s\r\n\r\n", chat_info->user);
         }else{
         //open chat with new message
-        chat_info = open_chat(user);
-        ul_add(chat_info);
-        dprintf(chat_info->fd,"FROM %s %s\r\n\r\n",chat_info->user,tail);
-        }
-    }else if(!strcmp(msg, "TO")){
-        printf("tail message: %s\n", tail);
+            chat_info = malloc(sizeof(user_list));
+            memset(chat_info,0,sizeof(user_list));
+            chat_info->user = strdup(user);
+            open_chat(user, chat_info);
+            ul_add(chat_info);
+            dprintf(chat_info->fd,"FROM %s %s\r\n\r\n",chat_info->user,tail);
+            ev.events = EPOLLIN;
+            ev.data.fd = chat_info->fd;
+            if(epoll_ctl(e_fd, EPOLL_CTL_ADD, chat_info->fd, &ev) == -1){
+                perror("epoll_ctl: sockfd");
+                exit(EXIT_FAILURE);
+            }
+        }    
+    }else if(!strcmp(msg, "OT")){
+        user = tail;
+        ot(user);
+    } else if( !strcmp(msg, "EDNE")){
+        user = tail;
+        chat_info = ul_remove_by_user(user);
+        free(chat_info->initial_msg);
+        free(chat_info->user);
+        free(chat_info);
+        printf("User \e[1m%s\e[0m is not online", user);
     }
     free(msg);
 }

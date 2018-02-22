@@ -67,6 +67,7 @@ int main(int argc, char** argv){
             break;
         close(sockfd);
     }
+    free(res);
 
     if (rp == NULL){
         printf("Failed to connect to %s:%s\n",argv[argc-2],argv[argc-1]);
@@ -104,26 +105,20 @@ int main(int argc, char** argv){
     sigemptyset(&set);
     sigaddset(&set, SIGCHLD);
     sigaddset(&set, SIGINT);
-    sigaddset(&set, SIGPIPE);
     sigaddset(&set, SIGTERM);
-
+    sigaddset(&set, SIGPIPE);
+    if((sigprocmask(SIG_BLOCK, &set, NULL)) < 0){
+        perror("sigprocmask");
+        exit(EXIT_FAILURE);
+    }
     while(0xCAFE){
         //wait for signal on either STDIN or Socket
-        ndfs = epoll_pwait(e_fd, events, sockfd, -1, &set);
+        ndfs = epoll_wait(e_fd, events, sockfd, -1);
         if (ndfs == -1) {
             perror("epoll_wait");
             exit(EXIT_FAILURE);
         }
         if(errno == EINTR){
-            if(sigismember(&set, SIGINT) | sigismember(&set, SIGTERM)){
-                ul_clean();
-                logout(sockfd);
-                exit(EXIT_SUCCESS);
-            }
-            if(sigismember(&set, SIGCHLD)){
-                ul_clean_child();
-            }
-            errno = 0;
             continue;
         }
 
