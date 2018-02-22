@@ -3,14 +3,14 @@
 
 int main(int argc, char** argv){
     #define MAX_EVENTS 10
-    if(argc <3){
+    if(argc < 2){
         printf("invalid amount of arguments\n");
         exit(1);
     }
 
     int sockfd = atoi(argv[1]), e_fd, n, ndfs;
     char* name = argv[2],*initial_msg,*message,*sender;
-    printf("Now chatting with %s\n", name);
+    printf("\e[32mNow chatting with \e[1m%s\e[0m\n", name);
     struct epoll_event ev, events[MAX_EVENTS];
     printf("socket1 %d\n", sockfd);
     initial_msg = read_socket_message(sockfd, "\r\n\r\n");

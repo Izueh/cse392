@@ -1,5 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 #include "user_list.h"
 
 
@@ -33,7 +36,7 @@ user_list* ul_remove(int fd){
 }
 
 user_list* ul_find(char* name){
-    user_list* walk= head;
+    user_list *walk= head;
     while(walk){
         if(!strcmp(walk->user, name)){
             return walk;
@@ -43,7 +46,28 @@ user_list* ul_find(char* name){
     return NULL;
 }
 
-void clean(){
+void ul_clean_child(){
+    user_list *walk=head, *prev=NULL;
+    int status;
+    while(walk){
+        waitpid(walk->pid,&status,WNOHANG);
+        if(WIFEXITED(status)){
+            close(walk->fd);
+
+            if(!prev){
+                head = walk->next;
+                free(walk);
+                walk = head;
+            }else{
+                prev->next = walk->next;
+                free(walk);
+                walk = prev->next;
+            }
+        }
+    }
+}
+
+void ul_clean(){
     user_list* walk = head;
     while(walk){
         free(walk->user);

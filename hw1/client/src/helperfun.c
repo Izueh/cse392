@@ -44,6 +44,15 @@ user_list* open_chat(char* user){
 
 }
 
+void logout(int sockfd){
+    dprintf(sockfd, "BYE\r\n\r\n");
+    char* msg = read_socket_message(sockfd, "\r\n\r\n");
+    if( strcmp(msg, "EYB") == 0 ){
+        printf("thank you\n");
+        free(msg);
+        close(sockfd);
+    }
+}
 //we should split this up into multiple function calls
 void command_action(char* msg, int sockfd){
     char* tail = split_first_word(msg), *user, *send_msg, *res;
@@ -52,13 +61,8 @@ void command_action(char* msg, int sockfd){
     if( strcmp(msg, "/help") == 0){
         printf("/logout: logout\n/listu: list of online friends\n");
     } else if( strcmp(msg, "/logout") == 0){
-        dprintf(sockfd, "BYE\r\n\r\n");
-        char* msg = read_socket_message(sockfd, "\r\n\r\n");
-        if( strcmp(msg, "EYB") == 0 ){
-            printf("thank you\n");
-            free(msg);
-            exit(0);
-        }
+        logout(sockfd);
+        exit(EXIT_SUCCESS);
     } else if( strcmp(msg, "/listu")  == 0 ){
         dprintf(sockfd, "LISTU\r\n\r\n");
     } else if( strcmp(msg, "/chat") == 0 ){
@@ -115,7 +119,7 @@ void login(char* name, int sockfd){
         msg = read_socket_message(sockfd, "\r\n\r\n");
         char* tail = split_first_word(msg);
         if(strcmp(msg, "MOTD") == 0){
-            printf("%s\n", tail);
+            printf("\e[32mMessage of the Day: \e[1m%s\e[0m\n", tail);
         }
     }else {
         printf("Error adding user");
@@ -125,12 +129,12 @@ void login(char* name, int sockfd){
 }
 
 void chat_handler(int sockfd, int wrtFD){
-    char* msg, tail;
+    char* msg;
     msg = read_socket_message(sockfd, "\n");
     dprintf(wrtFD, "%s\r\n\r\n", msg);
     free(msg);
     msg = read_socket_message(wrtFD, "\r\n\r\n");
-    tail = split_first_word(res);
+    split_first_word(msg);
     if( strcmp(msg, "EDNE") == 0){
         printf("User is not online");
     } else {

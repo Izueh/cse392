@@ -12,6 +12,7 @@
 
 void login(char* name, int sockfd);
 void chat_handler(int sockfd, int wrtFD);
+void logout(int sockfd);
 void socket_handler(int socketfd);
 void std_handler(int socketfd);
 
