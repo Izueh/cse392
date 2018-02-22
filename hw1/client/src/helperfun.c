@@ -65,6 +65,9 @@ void command_action(char* msg, int sockfd){
         user_info->user = strdup(user);
         user_info->initial_msg = strdup(send_msg);
         ul_add(user_info);
+    }else if(!strcmp(msg, "/close")){
+        printf("Good Bye\n");
+        exit(EXIT_SUCCESS);
     } else {
         printf("\e[31m\e[1minvalid command\e[0m\n");
     }
@@ -177,6 +180,7 @@ void socket_handler(int sockfd){
             open_chat(user, chat_info);
             ul_add(chat_info);
             dprintf(chat_info->fd,"FROM %s %s\r\n\r\n",chat_info->user,tail);
+            dprintf(sockfd, "MORF %s\r\n\r\n", chat_info->user);
             ev.events = EPOLLIN;
             ev.data.fd = chat_info->fd;
             if(epoll_ctl(e_fd, EPOLL_CTL_ADD, chat_info->fd, &ev) == -1){
