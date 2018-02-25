@@ -6,14 +6,21 @@
 #include <stdio.h>
 
 char* read_socket_message(int sockfd, const char* const end_msg){
-    char buff[MAXLINE + 1]={0}, *msg = calloc(1, MAXLINE+1);
+    char buff[2]={0}, *msg = calloc(1, MAXLINE+1);
     int n = 0, size = 0, allocated=1;
     do {
         retry:
-        n = read(sockfd, buff , MAXLINE);
+        n = read(sockfd, buff , 1);
         if( n < 0){
             perror("read");
             exit(EXIT_FAILURE);
+        }
+        if (n == 0){
+            free(msg);
+            msg = malloc(1);
+            msg[0] = '\0';
+            return msg;
+
         }
         if (errno == EINTR)
            goto retry;
@@ -26,8 +33,7 @@ char* read_socket_message(int sockfd, const char* const end_msg){
         msg[size] = '\0';
         strcat(msg,buff);
     }while(!strstr(msg, end_msg));
-
-    msg[size-4] = '\0';
+    msg[size-strlen(end_msg)] = '\0'; 
     return msg;
 }
 

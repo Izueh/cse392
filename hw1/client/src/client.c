@@ -8,18 +8,16 @@
 
 int main(int argc, char** argv){
     #define MAX_EVENTS 10
-    int sockfd, n, s, opt, e_fd, ndfs;
+    int sockfd, n, s, opt, ndfs;
     struct addrinfo hints;
     struct addrinfo *res, *rp;
-    struct epoll_event ev, events[MAX_EVENTS];
+    struct epoll_event events[MAX_EVENTS];
     sigset_t set;
         
-    
     if(argc <  4){
         printf("%s", USAGE);
         exit(EXIT_FAILURE);
     }
-
     while((opt = getopt(argc,argv,"hv")) != -1){
         switch(opt){
             case 'h':
@@ -46,9 +44,6 @@ int main(int argc, char** argv){
     hints.ai_canonname = NULL;
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
-    
-
-    
 
     // try connections
     s = getaddrinfo(argv[argc-2], argv[argc-1], &hints, &res);
@@ -72,6 +67,7 @@ int main(int argc, char** argv){
             break;
         close(sockfd);
     }
+    free(res);
 
     if (rp == NULL){
         printf("Failed to connect to %s:%s\n",argv[argc-2],argv[argc-1]);
@@ -109,41 +105,35 @@ int main(int argc, char** argv){
     sigemptyset(&set);
     sigaddset(&set, SIGCHLD);
     sigaddset(&set, SIGINT);
-    sigaddset(&set, SIGPIPE);
     sigaddset(&set, SIGTERM);
-
-
-
+    sigaddset(&set, SIGPIPE);
+    if((sigprocmask(SIG_BLOCK, &set, NULL)) < 0){
+        perror("sigprocmask");
+        exit(EXIT_FAILURE);
+    }
     while(0xCAFE){
         //wait for signal on either STDIN or Socket
-        ndfs = epoll_pwait(e_fd, events, sockfd, -1, &set);
+        ndfs = epoll_wait(e_fd, events, sockfd, -1);
         if (ndfs == -1) {
             perror("epoll_wait");
             exit(EXIT_FAILURE);
         }
         if(errno == EINTR){
-            if(sigismember(&set, SIGINT) | sigismember(&set, SIGTERM)){
-                ul_clean();
-                exit(EXIT_SUCCESS);
-            }
-            if(sigismember(&set, SIGCHLD)){
-                ul_clean_child();
-            }
-            errno = 0;
             continue;
         }
 
         for (n = 0; n < ndfs; ++n) {
             //info in socket needs to be read
-            if(events[n].data.fd == sockfd) {
-                socket_handler(sockfd);
+            if(events[n].data.fd == STDIN_FILENO) {
+                std_handler(sockfd);
             }
             //info coming from STDIN
-            else {
-                std_handler(sockfd);
+            else if(events[n].data.fd == sockfd) {
+                socket_handler(sockfd);
+            }else{
+                chat_handler(events[n].data.fd, sockfd);
             }
         }
     }
-
 }
 

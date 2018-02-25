@@ -12,6 +12,7 @@ int main(int argc, char** argv){
     char* name = argv[2],*initial_msg,*message,*sender;
     printf("\e[32mNow chatting with \e[1m%s\e[0m\n", name);
     struct epoll_event ev, events[MAX_EVENTS];
+    printf("socket1 %d\n", sockfd);
     initial_msg = read_socket_message(sockfd, "\r\n\r\n");
     sender = split_first_word(initial_msg);
     message = split_first_word(sender);
@@ -52,9 +53,24 @@ int main(int argc, char** argv){
             perror("epoll_wait");
             exit(EXIT_FAILURE);
         }
-
         for (n = 0; n < ndfs; ++n) {
             //info in socket needs to be read
+            if(events[n].data.fd == sockfd) {
+                char* msg = read_socket_message(sockfd, "\r\n\r\n"); 
+                sender = split_first_word(msg);
+                message = split_first_word(sender);
+                printf("> %s\n", message);
+
+            }else{
+                char* msg = read_socket_message(STDIN_FILENO, "\n");
+                if(!strcmp(msg,"/close")){
+                    close(sockfd);
+                    exit(EXIT_SUCCESS);
+
+                }
+                dprintf(sockfd, "TO %s %s\n", name, msg);
+
+            }
         }
     }
 }
