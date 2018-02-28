@@ -1,4 +1,9 @@
 import socket
+from threading import Thread
+from queue import Queue
+from sys import argv
+from sys import stdin
+import select
 
 def read(fd):
     msg = b''
@@ -42,6 +47,7 @@ def login():
                 raise Exception()
             name = msg.split(b'\r\n\r\n')[0]
             name = name.decode()
+            print(name)
             if name in users:
                 fd.sendall(b'ETAKEN\r\n\r\n')
                 fd.close()
@@ -94,8 +100,18 @@ def send_off(readfd, msg):
     return
 
 def shutdown():
-    print('shutdown')
-    return
+    for fd in users:
+        fd.close()
+    exit(0)
+
+def list_user():
+    print('Online Users:')
+    for user in fds:
+        print(user)
+
+def display_help():
+    print('''/users: Dumps a list of currently logged in users to stdout.
+/shutdown: Cleanly shuts the server down by disconnecting all connected users, closing all open file descriptors, and freeing any allocated memory.''')
 
 def handle():
     while(1):
@@ -111,11 +127,6 @@ def handle():
 
 
 if __name__ == '__main__':
-    from threading import Thread
-    from queue import Queue
-    from sys import argv
-    from sys import stdin
-    import select
 
     global login_queue
     global job_queue
@@ -140,7 +151,9 @@ if __name__ == '__main__':
             }
 
     stdin_handlers = {
-            '/shutdown': shutdown
+            '/shutdown': shutdown,
+            '/users': list_user,
+            '/help': display_help
             }
 
     threads = []

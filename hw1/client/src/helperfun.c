@@ -76,7 +76,6 @@ void command_action(char* msg, int sockfd){
 void login(char* name, int sockfd){
     dprintf(sockfd, "ME2U\r\n\r\n");
     char* msg = read_socket_message(sockfd, "\r\n\r\n");
-    printf("msg: %s\n", msg);
     if( strcmp(msg, "U2EM") != 0){        
         printf("error in u2em");
         exit(1);
