@@ -35,9 +35,13 @@ def listen(address):
 def login():
     while(1):
         fd = login_queue.get()
+        if fd == -1:
+            thead_exit()
         try:
             buf = fd.recv(8)
             cmd = buf.split(b'\r\n\r\n')[0]
+            if cmd == b'SHUTDOWN':
+                thread_exit();
             if cmd != b'ME2U':
                 raise Exception()
             fd.sendall(b'U2EM\r\n\r\n')
@@ -101,7 +105,17 @@ def send_off(readfd, msg):
 
 def shutdown():
     for fd in users:
+        if cmd == b'SHUTDOWN':
+            thread_exit();
         fd.close()
+    login_queue.put(-1)
+    for n in range(len(threads)-1):
+        job_queue.put((-1,b''))
+    for t in threads:
+        t.join()
+    exit(0)
+
+def thread_exit():
     exit(0)
 
 def list_user():
@@ -116,6 +130,8 @@ def display_help():
 def handle():
     while(1):
         fd, msg = job_queue.get()
+        if fd == -1:
+            thread_exit()
         if(' ' in msg):
             cmd, tail = msg.split(' ',1)
         else:
