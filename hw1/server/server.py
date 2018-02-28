@@ -28,47 +28,55 @@ def listen(address):
     return s
 
 def login():
-    fd = login_queue.get()
-    print(fd)
-    try:
-        buf = fd.recv(8)
-        cmd = buf.split(b'\r\n\r\n')[0]
-        if cmd != b'ME2U':
-            raise Exception()
-        fd.sendall(b'U2EM\r\n\r\n')
-        buf = fd.recv(18)
-        cmd,msg = buf.split(b' ')
-        if cmd != b'IAM':
-            raise Exception()
-        name = msg.split(b'\r\n\r\n')[0]
-        name = name.decode()
-        if name in users:
-            fd.sendall(b'ETAKEN\r\n\r\n')
+    while(1):
+        fd = login_queue.get()
+        try:
+            buf = fd.recv(8)
+            cmd = buf.split(b'\r\n\r\n')[0]
+            if cmd != b'ME2U':
+                raise Exception()
+            fd.sendall(b'U2EM\r\n\r\n')
+            buf = fd.recv(18)
+            cmd,msg = buf.split(b' ')
+            if cmd != b'IAM':
+                raise Exception()
+            name = msg.split(b'\r\n\r\n')[0]
+            name = name.decode()
+            if name in users:
+                fd.sendall(b'ETAKEN\r\n\r\n')
+                fd.close()
+                return
+            fds[name] = fd
+            users[fd] = name
+            fd.sendall(b'MAI\r\n\r\n')
+            fd.sendall(f'MOTD {MOTD}\r\n\r\n'.encode())
+            epoll.register(fd.fileno(), select.EPOLLIN)
+        except:
             fd.close()
-            return
-        fds[name] = fd
-        users[fd] = name
-        fd.sendall(b'MAI\r\n\r\n')
-        fd.sendall(f'MOTD {MOTD}\r\n\r\n'.encode())
-        print(fd)
-        epoll.register(fd.fileno(), select.EPOLLIN)
-    except:
-        fd.close()
 
-def send_ot(msg):
+def send_ot(readfd, msg):
     print('send ot')
     return
 
-def send_utsil(msg):
-    print('send_utsil')
+def send_utsil(readfd, msg):
+    readfd.sendall(b'UTSIL ')
+    for user in users :
+        readfd.sendall(f'{users[user]} '.encode())
+    readfd.sendall(b'\r\n\r\n')
     return
 
 
-def send_from(msg):
-    print('send message to: ', msg)
+def send_from(readfd, msg):
+    receiver_name, msg = msg.split(' ', 1)
+
+    if(receiver_name not in fds):
+        readfd.sendall(f'EDNE {receiver_name}\r\n\r\n'.encode())
+        return
+    fd = fds[receiver_name]
+    fd.sendall(f'FROM {sender_name} {msg}\r\n\r\n'.encode())
     return
 
-def send_off(msg):
+def send_off(readfd, msg):
     print('send_off')
     return
 def shutdown():
@@ -77,8 +85,12 @@ def shutdown():
 
 def handle():
     fd, msg = job_queue.get()
-    cmd, tail = msg.split(' ',1)
-    socket_handlers[cmd](tail) if cmd in socket_handlers \
+    if(' ' in msg):
+        cmd, tail = msg.split(' ',1)
+    else:
+        cmd = msg.split('\r\n\r\n')[0]
+        tail = ''
+    socket_handlers[cmd](readfd, tail) if cmd in socket_handlers \
             else fd.close()
 
 
