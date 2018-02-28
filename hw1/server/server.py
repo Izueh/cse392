@@ -29,6 +29,7 @@ def listen(address):
 
 def login():
     fd = login_queue.get()
+    print(fd)
     try:
         buf = fd.recv(8)
         cmd = buf.split(b'\r\n\r\n')[0]
@@ -49,27 +50,27 @@ def login():
         users[fd] = name
         fd.sendall(b'MAI\r\n\r\n')
         fd.sendall(f'MOTD {MOTD}\r\n\r\n'.encode())
-        epoll.register(fd)
+        print(fd)
+        epoll.register(fd.fileno(), select.EPOLLIN)
     except:
         fd.close()
 
-def send_ot():
-    print('send_ot')
+def send_ot(msg):
+    print('send ot')
     return
 
-def send_utsil():
+def send_utsil(msg):
     print('send_utsil')
     return
 
 
-def send_from():
-    print('send_from')
+def send_from(msg):
+    print('send message to: ', msg)
     return
 
-def send_off():
+def send_off(msg):
     print('send_off')
     return
-
 def shutdown():
     print('shutdown')
     return
@@ -77,7 +78,7 @@ def shutdown():
 def handle():
     fd, msg = job_queue.get()
     cmd, tail = msg.split(' ',1)
-    socket_handler[cmd](tail) if cmd in socket_hander \
+    socket_handlers[cmd](tail) if cmd in socket_handlers \
             else fd.close()
 
 
@@ -85,7 +86,7 @@ def handle():
 if __name__ == '__main__':
     from threading import Thread
     from queue import Queue
-    from sys import argv 
+    from sys import argv
     from sys import stdin
     import select
 
@@ -93,6 +94,7 @@ if __name__ == '__main__':
     global job_queue
     global users
     global fds
+    global socket_handlers
     job_queue = Queue()
     login_queue = Queue()
     users = {}
@@ -102,7 +104,7 @@ if __name__ == '__main__':
     MAX_EVENTS=10
     n_workers=5
 
-    server_handlers = {
+    socket_handlers = {
             'LISTU': send_utsil,
             'TO': send_from,
             'MORF': send_ot,
@@ -132,6 +134,7 @@ if __name__ == '__main__':
     epoll = select.epoll()
     epoll.register(s.fileno())
     epoll.register(stdin.fileno(), select.EPOLLIN)
+    connections = {}
     while 1:
         l = epoll.poll(10)
         for fd, event in l:
@@ -143,11 +146,13 @@ if __name__ == '__main__':
                         else print('invalid command')
             elif fd == s.fileno():
                 (clientsocket, address) = s.accept()
-                print("HERHEHEH")
-                login_queue.put(clientsocket)
                 #add to login queue
+                login_queue.put(clientsocket)
+                #add to connections list 
+                connections[clientsocket.fileno()] = clientsocket;
             else:
-                print('else')
-                msg = read(fd)
-                job_queue((fd, msg))
+                readfd = connections[fd]
+                msg = read(readfd)
+                msg = msg.decode()
+                job_queue.put((readfd, msg))
 
