@@ -131,7 +131,7 @@ if __name__ == '__main__':
 
     epoll = select.epoll()
     epoll.register(s.fileno())
-    #epoll.register(stdin.fileno())
+    epoll.register(stdin.fileno(), select.EPOLLIN)
     while 1:
         l = epoll.poll(10)
         for fd, event in l:
@@ -139,7 +139,6 @@ if __name__ == '__main__':
             if fd == stdin.fileno():
                 print('stdinput')
                 cmd = input().strip()
-                print(cmd)
                 stdin_handlers[cmd]() if cmd in stdin_handlers \
                         else print('invalid command')
             elif fd == s.fileno():
