@@ -55,7 +55,13 @@ def login():
             fd.close()
 
 def send_ot(readfd, msg):
-    print('send ot')
+    receiver_name = msg.split('\r\n\r\n')[0]
+    if(receiver_name not in fds):
+        print('Garbage')
+        return
+    fd = fds[receiver_name]
+    sender_name = users[readfd]
+    fd.sendall(f'OT {sender_name}\r\n\r\n'.encode())
     return
 
 def send_utsil(readfd, msg):
@@ -65,7 +71,6 @@ def send_utsil(readfd, msg):
     readfd.sendall(b'\r\n\r\n')
     return
 
-
 def send_from(readfd, msg):
     receiver_name, msg = msg.split(' ', 1)
 
@@ -73,7 +78,8 @@ def send_from(readfd, msg):
         readfd.sendall(f'EDNE {receiver_name}\r\n\r\n'.encode())
         return
     fd = fds[receiver_name]
-    fd.sendall(f'FROM {sender_name} {msg}\r\n\r\n'.encode())
+    sender_name = users[readfd]
+    fd.sendall(f'FROM {sender_name} {msg}'.encode()) #msg already has /r/n/r/n
     return
 
 def send_off(readfd, msg):
@@ -84,14 +90,15 @@ def shutdown():
     return
 
 def handle():
-    fd, msg = job_queue.get()
-    if(' ' in msg):
-        cmd, tail = msg.split(' ',1)
-    else:
-        cmd = msg.split('\r\n\r\n')[0]
-        tail = ''
-    socket_handlers[cmd](readfd, tail) if cmd in socket_handlers \
-            else fd.close()
+    while(1):
+        fd, msg = job_queue.get()
+        if(' ' in msg):
+            cmd, tail = msg.split(' ',1)
+        else:
+            cmd = msg.split('\r\n\r\n')[0]
+            tail = ''
+        socket_handlers[cmd](readfd, tail) if cmd in socket_handlers \
+                else fd.close()
 
 
 
@@ -150,7 +157,6 @@ if __name__ == '__main__':
     while 1:
         l = epoll.poll(10)
         for fd, event in l:
-            print('input received')
             if fd == stdin.fileno():
                 print('stdinput')
                 cmd = input().strip()
