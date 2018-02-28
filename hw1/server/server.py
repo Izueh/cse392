@@ -1,5 +1,5 @@
 import socket
-       
+
 def read(fd):
     msg = b''
     while not msg.endswith(b'\r\n\r\n'):
@@ -7,9 +7,9 @@ def read(fd):
     return msg
 
 
-def connect(address):
+def listen(address):
     s = None
-    for res in socket.getaddrinfo(host, port, socket.AF_UNSPEC, \
+    for res in socket.getaddrinfo(address[0], address[1], socket.AF_UNSPEC, \
             socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
         af, socktype, proto, canonname, sa = res
         try:
@@ -26,7 +26,6 @@ def connect(address):
             continue
         break
     return s
-    
 
 def login():
     fd = login_queue.get()
@@ -53,16 +52,26 @@ def login():
     except:
         fd.close()
 
-def send_ot:
-    pass
+def send_ot():
+    print('send_ot')
+    return
+
+def send_utsil():
+    print('send_utsil')
+    return
 
 
-def send_utsil:
-    pass
+def send_from():
+    print('send_from')
+    return
 
+def send_off():
+    print('send_off')
+    return
 
-def send_from:
-    pass
+def shutdown():
+    print('shutdown')
+    return
 
 def handle():
     fd, msg = job_queue.get()
@@ -77,32 +86,36 @@ if __name__ == '__main__':
     from queue import Queue
     from sys import argv 
     from sys import stdin
-    import select.epoll
+    import select
+
+    global login_queue
+    job_queue = Queue()
+    login_queue = Queue()
 
     MOTD = 'Hi'
     MAX_EVENTS=10
-
+    n_workers=5
 
     server_handlers = {
             'LISTU': send_utsil,
             'TO': send_from,
             'MORF': send_ot,
-            'BYE': send_uoff 
+            'BYE': send_off
             }
 
     stdin_handlers = {
-            '/shutdown': shutdown 
+            '/shutdown': shutdown
             }
 
     threads = []
 
-    s = connect(argv[1],argv[2]) 
+    s = listen((argv[1],argv[2]))
     if not s:
         exit(1)
 
     t = Thread(target=login)
     t.start()
-    thread.append(t)
+    threads.append(t)
 
     for i in range(n_workers):
         t = Thread(target=handle)
@@ -112,8 +125,6 @@ if __name__ == '__main__':
     if not s:
         exit(1)
 
-    job_queue = Queue()
-    login_queue = Queue()
     epoll = select.epoll()
     epoll.register(s)
     epoll.register(stdin.fileno())
@@ -122,8 +133,8 @@ if __name__ == '__main__':
         for fd, event in l:
             if fd == stdin.fileno():
                 cmd = input().strip()
-                stdin_handler[cmd]() if cmd in stdin_handler \
-                        else print('invalid command') 
+                stdin_handlers[cmd]() if cmd in stdin_handlers \
+                        else print('invalid command')
             elif fd == s:
                 connfd = s.accept()
                 login_queue.put(confd)
