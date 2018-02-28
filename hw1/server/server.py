@@ -31,8 +31,8 @@ def login():
     fd = login_queue.get()
     try:
         buf = fd.recv(8)
-        cmd = buf.split('\r\n\r\n')[0]
-        if cmd != b'ME2u':
+        cmd = buf.split(b'\r\n\r\n')[0]
+        if cmd != b'ME2U':
             raise Exception()
         fd.sendall(b'U2EM\r\n\r\n')
         buf = fd.recv(18)
@@ -40,6 +40,7 @@ def login():
         if cmd != b'IAM':
             raise Exception()
         name = msg.split(b'\r\n\r\n')[0]
+        name = name.decode()
         if name in users:
             fd.sendall(b'ETAKEN\r\n\r\n')
             fd.close()
@@ -89,8 +90,13 @@ if __name__ == '__main__':
     import select
 
     global login_queue
+    global job_queue
+    global users
+    global fds
     job_queue = Queue()
     login_queue = Queue()
+    users = {}
+    fds = {}
 
     MOTD = 'Hi'
     MAX_EVENTS=10
@@ -111,6 +117,7 @@ if __name__ == '__main__':
 
     s = listen((argv[1],argv[2]))
     if not s:
+        print('error in listen')
         exit(1)
 
     t = Thread(target=login)
@@ -122,24 +129,26 @@ if __name__ == '__main__':
         t.start()
         threads.append(t)
 
-    if not s:
-        exit(1)
-
     epoll = select.epoll()
-    epoll.register(s)
-    epoll.register(stdin.fileno())
+    epoll.register(s.fileno())
+    #epoll.register(stdin.fileno())
     while 1:
-        l = epoll.poll(MAX_EVENTS)
+        l = epoll.poll(10)
         for fd, event in l:
+            print('input received')
             if fd == stdin.fileno():
+                print('stdinput')
                 cmd = input().strip()
+                print(cmd)
                 stdin_handlers[cmd]() if cmd in stdin_handlers \
                         else print('invalid command')
-            elif fd == s:
-                connfd = s.accept()
-                login_queue.put(confd)
+            elif fd == s.fileno():
+                (clientsocket, address) = s.accept()
+                print("HERHEHEH")
+                login_queue.put(clientsocket)
                 #add to login queue
             else:
+                print('else')
                 msg = read(fd)
                 job_queue((fd, msg))
 
