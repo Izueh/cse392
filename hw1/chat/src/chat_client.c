@@ -18,10 +18,10 @@ int main(int argc, char** argv){
     message = split_first_word(sender);
     
     if(!strcmp(initial_msg, "TO"))
-        printf("> %s\n", message);
+        printf("< %s\n", message);
 
     if(!strcmp(initial_msg, "FROM"))
-        printf("< %s\n", message);
+        printf("\e[36m> %s\e[37m\n", message);
     
     e_fd = epoll_create1(0);
 
@@ -48,6 +48,7 @@ int main(int argc, char** argv){
 
     while(0xDEAD){
             //wait for signal on either STDIN or Socket
+    reset:
         ndfs = epoll_wait(e_fd, events, sockfd, -1);
         if (ndfs == -1) {
             perror("epoll_wait");
@@ -56,10 +57,15 @@ int main(int argc, char** argv){
         for (n = 0; n < ndfs; ++n) {
             //info in socket needs to be read
             if(events[n].data.fd == sockfd) {
-                char* msg = read_socket_message(sockfd, "\r\n\r\n"); 
+                char* msg = read_socket_message(sockfd, "\r\n\r\n");
+                if(!strcmp(msg, "/offline")){
+                    printf("\e[31mUser if offline\n \e[37m\n");
+                    goto reset;
+                }
                 sender = split_first_word(msg);
                 message = split_first_word(sender);
-                printf("> %s\n", message);
+                printf("\e[36m> %s\e[37m\n", message);
+                printf("\e[37m< ");
 
             }else{
                 char* msg = read_socket_message(STDIN_FILENO, "\n");

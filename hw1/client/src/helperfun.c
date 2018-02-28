@@ -202,7 +202,13 @@ void socket_handler(int sockfd){
         free(chat_info->initial_msg);
         free(chat_info->user);
         free(chat_info);
-        printf("User \e[1m%s\e[0m is not online", user);
+        printf("User \e[1m%s\e[0m is not online\n", user);
+    } else if (!strcmp(msg, "UOFF")){
+        user = tail;
+        chat_info = ul_remove_by_user(user);
+        dprintf(chat_info->fd, "/offline\r\n\r\n");
+        free(chat_info->user);
+        free(chat_info);
     }
     free(msg);
 }

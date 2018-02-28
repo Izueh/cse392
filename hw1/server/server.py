@@ -51,7 +51,6 @@ def login():
                 raise Exception()
             name = msg.split(b'\r\n\r\n')[0]
             name = name.decode()
-            print(name)
             if name in users:
                 fd.sendall(b'ETAKEN\r\n\r\n')
                 fd.close()
