@@ -192,6 +192,7 @@ if __name__ == '__main__':
     epoll.register(stdin.fileno(), select.EPOLLIN)
     connections = {}
     while 1:
+        print('here')
         l = epoll.poll(10)
         for fd, event in l:
             if fd == stdin.fileno():
