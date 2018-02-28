@@ -83,8 +83,16 @@ def send_from(readfd, msg):
     return
 
 def send_off(readfd, msg):
-    print('send_off')
+    sender_name = users[readfd]
+    readfd.sendall(b'EYB\r\n\r\n')
+    del users[readfd]
+    del fds[sender_name]
+    for user in users:
+        user.sendall(f'UOFF {sender_name}\r\n\r\n'.encode())
+    epoll.unregister(readfd.fileno())
+    readfd.close
     return
+
 def shutdown():
     print('shutdown')
     return
@@ -114,6 +122,7 @@ if __name__ == '__main__':
     global users
     global fds
     global socket_handlers
+    global epoll
     job_queue = Queue()
     login_queue = Queue()
     users = {}
