@@ -5,6 +5,7 @@
 #include "helperfun.h"
 #include "user_list.h"
 #include "buf.h"
+#include "logger.h"
 
 
 extern int e_fd;
@@ -62,6 +63,10 @@ void command_action(char* msg, int sockfd){
     } else if( strcmp(msg, "/chat") == 0 ){
         user = tail;
         send_msg = split_first_word(tail);
+        if(send_msg == NULL){
+            printf("\e[31m\e[1minvalid command\e[0m\n");
+            return;
+        }
         user_info = malloc(sizeof(user_list));
         memset(user_info,0, sizeof(user_list));
         log_it("sending TO");
@@ -186,6 +191,10 @@ void socket_handler(int sockfd){
         log_it("received FROM");
         user = tail;
         tail = split_first_word(tail);
+        if(tail == NULL){
+            printf("invalid command");
+            return;
+        }
         chat_info = ul_find(user);
         if(chat_info){
         //chat is open relay message
