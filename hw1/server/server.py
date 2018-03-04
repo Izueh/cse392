@@ -142,8 +142,12 @@ def handle():
         else:
             cmd = msg.split('\r\n\r\n')[0]
             tail = ''
-        socket_handlers[cmd](readfd, tail) if cmd in socket_handlers \
-                else fd.close()
+        if cmd in socket_handlers:
+            socket_handlers[cmd](readfd, tail) 
+        else:
+            epoll.unregister(fd.fileno())
+            fd.close()
+
 
 
 
