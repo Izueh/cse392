@@ -59,7 +59,7 @@ int main(int argc, char** argv){
             if(events[n].data.fd == sockfd) {
                 char* msg = read_socket_message(sockfd, "\r\n\r\n");
                 if(!strcmp(msg, "/offline")){
-                    printf("\e[31mUser if offline\n \e[37m\n");
+                    printf("\e[31mUser is offline\n \e[37m\n");
                     goto reset;
                 }
                 sender = split_first_word(msg);

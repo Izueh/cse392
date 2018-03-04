@@ -36,7 +36,7 @@ def login():
     while(1):
         fd = login_queue.get()
         if fd == -1:
-            thead_exit()
+            thread_exit()
         try:
             buf = fd.recv(8)
             cmd = buf.split(b'\r\n\r\n')[0]
