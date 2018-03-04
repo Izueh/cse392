@@ -10,6 +10,8 @@ def read(fd):
     try:
         while not msg.endswith(b'\r\n\r\n'):
             msg += fd.recv(1)
+            if len(msg) == 0:
+                return None
 
     except (ConnectionResetError, socket.timeout) as e:
         return None
@@ -102,6 +104,7 @@ def send_off(readfd, msg):
         readfd.sendall(b'EYB\r\n\r\n')
         del users[readfd]
         del fds[sender_name]
+        del connections[readfd.fileno()]
         for user in users:
             user.sendall(f'UOFF {sender_name}\r\n\r\n'.encode())
         epoll.unregister(readfd.fileno())
@@ -223,8 +226,12 @@ if __name__ == '__main__':
                     readfd = connections[fd]
                     msg = read(readfd)
                     if not msg:
-                        readfd.close()
-                        del connections[fd]
+                        with lock:
+                            user = users[readfd]
+                            del fds[user]
+                            del users[readfd]
+                            readfd.close()
+                            del connections[fd]
                         continue
                     msg = msg.decode()
                     if(len(msg) == 0):
