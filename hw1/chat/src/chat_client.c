@@ -18,11 +18,13 @@ int main(int argc, char** argv){
     message = split_first_word(sender);
     
     if(!strcmp(initial_msg, "TO"))
-        printf("< %s\n", message);
+        printf("\e[34m< %s\e[0m\n", message);
 
     if(!strcmp(initial_msg, "FROM"))
-        printf("\e[36m> %s\e[37m\n", message);
+        printf("\e[36m> %s\e[0m\n", message);
     
+    printf("\e[34m< ");
+    fflush(stdout);
     e_fd = epoll_create1(0);
 
     if(e_fd == -1){
@@ -59,13 +61,14 @@ int main(int argc, char** argv){
             if(events[n].data.fd == sockfd) {
                 char* msg = read_socket_message(sockfd, "\r\n\r\n");
                 if(!strcmp(msg, "/offline")){
-                    printf("\e[31mUser is offline\n \e[37m\n");
+                    printf("\e[31mUser is offline\e[0m\n");
                     goto reset;
                 }
                 sender = split_first_word(msg);
                 message = split_first_word(sender);
-                printf("\e[36m> %s\e[37m\n", message);
-                printf("\e[37m< ");
+                printf("\n\e[36m> %s\e[0m\n", message);
+                printf("\e[34m< ");
+                fflush(stdout);
 
             }else{
                 char* msg = read_socket_message(STDIN_FILENO, "\n");
@@ -75,7 +78,8 @@ int main(int argc, char** argv){
 
                 }
                 dprintf(sockfd, "TO %s %s\n", name, msg);
-
+                printf("\e[34m< ");
+                fflush(stdout);
             }
         }
     }

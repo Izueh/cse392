@@ -110,7 +110,7 @@ def send_from(readfd, msg):
         fd = fds[receiver_name]
         sender_name = users[readfd]
         fd.sendall(f'FROM {sender_name} {msg}'.encode()) #msg already has /r/n/r/n
-        printv(f"FROM {sender_name} {msg}")
+        printv(f"FROM {sender_name} {msg[:-4]}")
     return
 
 def send_off(readfd, msg):

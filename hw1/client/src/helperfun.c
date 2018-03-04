@@ -197,7 +197,7 @@ void socket_handler(int sockfd){
         user = tail;
         tail = split_first_word(tail);
         if(tail == NULL){
-            printf("invalid command");
+            exit(1);
             return;
         }
         chat_info = ul_find(user);
