@@ -74,7 +74,16 @@ int main(int argc, char** argv){
         exit(EXIT_FAILURE);
     }
 
-    log_it("connection established");
+    // path to chat bin
+    char * cpy = strdup(argv[0]);
+    char * last = strrchr(cpy,'/');
+    *(last+1)='\0';
+    char * path = calloc(1,strlen(cpy)+strlen("chat")+1);
+    strcat(path,cpy);
+    strcat(path,"chat");
+    set_path(path);
+    free(cpy);
+
     login(argv[argc-3], sockfd);
 
     // epoll stuff
@@ -112,7 +121,6 @@ int main(int argc, char** argv){
         perror("sigprocmask");
         exit(EXIT_FAILURE);
     }
-    log_it("epoll created");
     while(0xCAFE){
         //wait for signal on either STDIN or Socket
         ndfs = epoll_wait(e_fd, events, sockfd, -1);

@@ -3,7 +3,13 @@ from threading import Thread,Lock
 from queue import Queue
 from sys import argv
 from sys import stdin
+from argparse import ArgumentParser
 import select
+
+
+def printv(s):
+    if args.v:
+        print(f'\x1B[1;34m{s}\x1B[0m')
 
 def read(fd):
     msg = b''
@@ -12,11 +18,11 @@ def read(fd):
             msg += fd.recv(1)
             if len(msg) == 0:
                 return None
-
     except (ConnectionResetError, socket.timeout) as e:
         return None
-    return msg
 
+    printv(f"{msg.decode('utf-8')[:-4]}")
+    return msg
 
 def listen(address):
     s = None
@@ -44,14 +50,15 @@ def login():
         if fd == -1:
             thread_exit()
         try:
-            buf = fd.recv(8)
+            buf = read(fd)
             cmd = buf.split(b'\r\n\r\n')[0]
             if cmd == b'SHUTDOWN':
                 thread_exit();
             if cmd != b'ME2U':
                 raise Exception()
             fd.sendall(b'U2EM\r\n\r\n')
-            buf = fd.recv(18)
+            printv("U2EM")
+            buf = read(fd)
             cmd,msg = buf.split(b' ')
             if cmd != b'IAM':
                 raise Exception()
@@ -60,12 +67,15 @@ def login():
             with lock:
                 if name in users:
                     fd.sendall(b'ETAKEN\r\n\r\n')
+                    printv("ETAKEN")
                     fd.close()
                     return
                 fds[name] = fd
                 users[fd] = name
             fd.sendall(b'MAI\r\n\r\n')
+            printv("MAI")
             fd.sendall(f'MOTD {MOTD}\r\n\r\n'.encode())
+            printv(f"MOTD {MOTD}")
             epoll.register(fd.fileno(), select.EPOLLIN)
         except:
             fd.close()
@@ -79,12 +89,15 @@ def send_ot(readfd, msg):
         fd = fds[receiver_name]
         sender_name = users[readfd]
         fd.sendall(f'OT {sender_name}\r\n\r\n'.encode())
+    printv(f"OT {sender_name}")
     return
 
 def send_utsil(readfd, msg):
     with lock:
-        send_msg = 'UTSIL ' + ' '.join(fds.keys())+'\r\n\r\n'
+        ul = ' '.join(fds.keys())
+        send_msg = f'UTSIL {ul}\r\n\r\n' 
         readfd.sendall(send_msg.encode())
+    printv(f"{send_msg[:-4]}")
     return
 
 def send_from(readfd, msg):
@@ -92,10 +105,12 @@ def send_from(readfd, msg):
     with lock:
         if(receiver_name not in fds):
             readfd.sendall(f'EDNE {receiver_name}\r\n\r\n'.encode())
+            printv(f"EDNE {receiver_name}")
             return
         fd = fds[receiver_name]
         sender_name = users[readfd]
         fd.sendall(f'FROM {sender_name} {msg}'.encode()) #msg already has /r/n/r/n
+        printv(f"FROM {sender_name} {msg}")
     return
 
 def send_off(readfd, msg):
@@ -107,6 +122,7 @@ def send_off(readfd, msg):
         del connections[readfd.fileno()]
         for user in users:
             user.sendall(f'UOFF {sender_name}\r\n\r\n'.encode())
+            printv(f"FROM {sender_name} {msg}")
         epoll.unregister(readfd.fileno())
         readfd.close
     return
@@ -168,9 +184,17 @@ if __name__ == '__main__':
     users = {}
     fds = {}
 
-    MOTD = 'Hi'
+    parser = ArgumentParser(description="ME2U Server")
+    parser.add_argument('-v',action='store_true',help='Logs client server communication')
+    parser.add_argument('port',metavar='PORT', help='Port number to listen on',default='8080')
+    parser.add_argument('n', metavar='NUM WORKERS',help='Number of worker threads to spawn', default=5, type=int)
+    parser.add_argument('motd', metavar='MOTD',help='Message of the Day to display', default='Welcome')
+    parser.add_argument('addr', metavar='ADDR',nargs='?',help='Address to listen on',default='localhost')
+    args = parser.parse_args()
+
+    MOTD = args.motd
     MAX_EVENTS=10
-    n_workers=5
+    n_workers= args.n
 
     socket_handlers = {
             'LISTU': send_utsil,
@@ -187,7 +211,7 @@ if __name__ == '__main__':
 
     threads = []
 
-    s = listen((argv[1],argv[2]))
+    s = listen((args.addr,args.port))
     if not s:
         print('error in listen')
         exit(1)
@@ -217,12 +241,10 @@ if __name__ == '__main__':
                 connections[clientsocket.fileno()] = clientsocket;
             elif event & select.EPOLLIN:
                 if fd == stdin.fileno():
-                    print('stdinput')
                     cmd = input().strip()
                     stdin_handlers[cmd]() if cmd in stdin_handlers \
                             else print('invalid command')
                 else:
-                    print('here')
                     readfd = connections[fd]
                     msg = read(readfd)
                     if not msg:
@@ -234,8 +256,5 @@ if __name__ == '__main__':
                             del connections[fd]
                         continue
                     msg = msg.decode()
-                    if(len(msg) == 0):
-                        #user left remove from the list and connections
-                        print('left');
                     job_queue.put((readfd, msg))
 

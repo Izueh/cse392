@@ -10,7 +10,7 @@
 
 extern int e_fd;
 extern struct epoll_event ev;
-
+char* chat_bin;
 
 void open_chat(char* user, user_list* chat_info){
     int socks[2], pid;
@@ -25,8 +25,9 @@ void open_chat(char* user, user_list* chat_info){
         exit(EXIT_FAILURE);
     }else if(pid == 0){
         close(socks[0]);
+
         snprintf(sockfd, sizeof(sockfd), "%d", socks[1]);
-        execlp("xterm","xterm", "-e", "./chat", sockfd, user, (void *)NULL);
+        execlp("xterm","xterm", "-e", chat_bin, sockfd, user, (void *)NULL);
         perror("execl: ");
         exit(1);
     }
@@ -37,13 +38,13 @@ void open_chat(char* user, user_list* chat_info){
 }
 
 void logout(int sockfd){
-    log_it("sending BYE");
+    log_it("sending: ","BYE");
     dprintf(sockfd, "BYE\r\n\r\n");
     char* msg = read_socket_message(sockfd, "\r\n\r\n");
     if( strcmp(msg, "EYB") == 0 ){
-        log_it("received EYB");
         printf("thank you\n");
         free(msg);
+        free(chat_bin);
         close(sockfd);
     }
 }
@@ -58,7 +59,7 @@ void command_action(char* msg, int sockfd){
         logout(sockfd);
         exit(EXIT_SUCCESS);
     } else if( strcmp(msg, "/listu")  == 0 ){
-        log_it("sending LISTU");
+        log_it("sending: ","LISTU");
         dprintf(sockfd, "LISTU\r\n\r\n");
     } else if( strcmp(msg, "/chat") == 0 ){
         user = tail;
@@ -69,8 +70,14 @@ void command_action(char* msg, int sockfd){
         }
         user_info = malloc(sizeof(user_list));
         memset(user_info,0, sizeof(user_list));
-        log_it("sending TO");
         dprintf(sockfd, "TO %s %s\r\n\r\n", user, send_msg);
+
+        int size =strlen("TO ")+strlen(user)+strlen(send_msg)+2;
+        char* tmp = calloc(1,size);
+        snprintf(tmp,size,"TO %s %s",user,send_msg);
+        log_it("sending: ",tmp);
+        free(tmp);
+
         user_info->user = strdup(user);
         user_info->initial_msg = strdup(send_msg);
         ul_add(user_info);
@@ -83,35 +90,36 @@ void command_action(char* msg, int sockfd){
 }
 
 void login(char* name, int sockfd){
-    log_it("sending ME2U");
     dprintf(sockfd, "ME2U\r\n\r\n");
+    log_it("sending: ","ME2U");
     char* msg = read_socket_message(sockfd, "\r\n\r\n");
     if( strcmp(msg, "U2EM") != 0){        
-        printf("error in u2em");
+        printf("error in u2em\n");
         exit(1);
     }
-    log_it("received U2EM");
     free(msg);
-    log_it("sending IAM");
     dprintf(sockfd, "IAM %s\r\n\r\n", name);
+
+    int size = strlen("IAM ")+strlen(name)+1;
+    char* tmp = calloc(1,size);
+    snprintf(tmp,size,"IAM %s",name);
+    log_it("sending: ", tmp);
+    free(tmp);
+
     msg = read_socket_message(sockfd, "\r\n\r\n");
     if( strcmp(msg, "ETAKEN") == 0){        
-        log_it("received ETAKEN");
-        printf("User already in use\n");
+        printf("\e[1;31mUser already in use\e[0m\n");
         free(msg);
         exit(1);
     }else if( strcmp(msg, "MAI" ) == 0) {
-        log_it("received MAI");
         free(msg); 
         msg = read_socket_message(sockfd, "\r\n\r\n");
         char* tail = split_first_word(msg);
         if(strcmp(msg, "MOTD") == 0){
-            log_it("received MOTD");
             printf("\e[32mMessage of the Day: \e[1m%s\e[0m\n", tail);
         }
     }else {
-        log_it("received message other than MAI or ETAKEN");
-        printf("Error adding user");
+        printf("Error adding user\n");
         free(msg);
         exit(1);
     }
@@ -174,21 +182,18 @@ void socket_handler(int sockfd){
     user_list* chat_info;
     msg = read_socket_message(sockfd, "\r\n\r\n");
     if(!*msg){
-        log_it("server closed connection");
-        printf("server closed connection");
+        printf("\e[1;31mserver closed connection\e[0m");
         free(msg);
         exit(EXIT_FAILURE);
     }
     tail = split_first_word(msg);
     if(!strcmp(msg, "UTSIL")){
-        log_it("recevied UTSIL");
         printf("Online Users: \n"); 
         while((user=tail)){
             tail = split_first_word(tail);
             printf("%s\n",user);
         }
     }else if(!strcmp(msg, "FROM")){
-        log_it("received FROM");
         user = tail;
         tail = split_first_word(tail);
         if(tail == NULL){
@@ -208,8 +213,14 @@ void socket_handler(int sockfd){
             open_chat(user, chat_info);
             ul_add(chat_info);
             dprintf(chat_info->fd,"FROM %s %s\r\n\r\n",chat_info->user,tail);
-            log_it("sending MORF");
             dprintf(sockfd, "MORF %s\r\n\r\n", chat_info->user);
+
+            int size = strlen("MORF ") + strlen(chat_info->user)+1;
+            char* tmp = calloc(1,size);
+            snprintf(tmp,size,"MORF %s", chat_info->user);
+            log_it("sending: ",tmp);
+            free(tmp);
+
             ev.events = EPOLLIN;
             ev.data.fd = chat_info->fd;
             if(epoll_ctl(e_fd, EPOLL_CTL_ADD, chat_info->fd, &ev) == -1){
@@ -218,11 +229,9 @@ void socket_handler(int sockfd){
             }
         }    
     }else if(!strcmp(msg, "OT")){
-        log_it("received OT");
         user = tail;
         ot(user);
     } else if( !strcmp(msg, "EDNE")){
-        log_it("received EDNE");
         user = tail;
         chat_info = ul_remove_by_user(user);
         if(chat_info->pid){
@@ -257,3 +266,6 @@ void std_handler(int sockfd){
     command_action(buff, sockfd);
 }
 
+void set_path(char* chat_path){
+    chat_bin = chat_path;
+}

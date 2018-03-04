@@ -18,6 +18,7 @@ void logout(int sockfd);
 void ot(char* user);
 void socket_handler(int socketfd);
 void std_handler(int socketfd);
+void set_path(char* path);
 
 
 #endif

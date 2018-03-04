@@ -1,4 +1,5 @@
 #include "buf.h"
+#include "logger.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,6 +35,7 @@ char* read_socket_message(int sockfd, const char* const end_msg){
         strcat(msg,buff);
     }while(!strstr(msg, end_msg));
     msg[size-strlen(end_msg)] = '\0'; 
+    log_it("received: ",msg);
     return msg;
 }
 
