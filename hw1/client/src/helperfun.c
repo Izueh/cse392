@@ -199,10 +199,20 @@ void socket_handler(int sockfd){
     } else if( !strcmp(msg, "EDNE")){
         user = tail;
         chat_info = ul_remove_by_user(user);
-        free(chat_info->initial_msg);
-        free(chat_info->user);
-        free(chat_info);
-        printf("User \e[1m%s\e[0m is not online\n", user);
+        if(chat_info->pid){
+            dprintf(chat_info->fd, "/offline\r\n\r\n");
+            ev.events = EPOLLIN;
+            ev.data.fd = chat_info->fd;
+            if(epoll_ctl(e_fd, EPOLL_CTL_ADD, chat_info->fd, &ev) == -1){
+                perror("epoll_ctl: sockfd");
+                exit(EXIT_FAILURE);
+            }
+        }else{
+            free(chat_info->initial_msg);
+            free(chat_info->user);
+            free(chat_info);
+            printf("User \e[1m%s\e[0m is not online\n", user);
+        }
     } else if (!strcmp(msg, "UOFF")){
         user = tail;
         chat_info = ul_find(user);
