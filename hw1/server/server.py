@@ -1,5 +1,5 @@
 import socket
-from threading import Thread
+from threading import Thread,Lock
 from queue import Queue
 from sys import argv
 from sys import stdin
@@ -7,10 +7,12 @@ import select
 
 def read(fd):
     msg = b''
-    while not msg.endswith(b'\r\n\r\n'):
-        msg += fd.recv(1)
-        if len(msg) == 0:
-            return None
+    try:
+        while not msg.endswith(b'\r\n\r\n'):
+            msg += fd.recv(1)
+
+    except (ConnectionResetError, socket.timeout) as e:
+        return None
     return msg
 
 
@@ -79,7 +81,7 @@ def send_ot(readfd, msg):
 
 def send_utsil(readfd, msg):
     with lock:
-        send_msg = 'UTSIL ' + ' '.join(users.keys())+'\r\n\r\n'
+        send_msg = 'UTSIL ' + ' '.join(fds.keys())+'\r\n\r\n'
         readfd.sendall(send_msg.encode())
     return
 
@@ -155,7 +157,7 @@ if __name__ == '__main__':
     global epoll
     job_queue = Queue()
     login_queue = Queue()
-    lock = threading.Lock()
+    lock = Lock()
     users = {}
     fds = {}
 
@@ -199,29 +201,30 @@ if __name__ == '__main__':
     while 1:
         l = epoll.poll(10)
         for fd, event in l:
-            if fd == stdin.fileno():
-                print('stdinput')
-                cmd = input().strip()
-                stdin_handlers[cmd]() if cmd in stdin_handlers \
-                        else print('invalid command')
-            elif fd == s.fileno():
+            if fd == s.fileno():
                 (clientsocket, address) = s.accept()
                 clientsocket.settimeout(5)
                 #add to login queue
                 login_queue.put(clientsocket)
                 #add to connections list 
                 connections[clientsocket.fileno()] = clientsocket;
-            else:
-                print('here')
-                readfd = connections[fd]
-                msg = read(readfd)
-                if not msg:
-                    readfd.close()
-                    del connections[fd]
-                    continue
-                msg = msg.decode()
-                if(len(msg) == 0):
-                    #user left remove from the list and connections
-                    print('left');
-                job_queue.put((readfd, msg))
+            elif event & select.EPOLLIN:
+                if fd == stdin.fileno():
+                    print('stdinput')
+                    cmd = input().strip()
+                    stdin_handlers[cmd]() if cmd in stdin_handlers \
+                            else print('invalid command')
+                else:
+                    print('here')
+                    readfd = connections[fd]
+                    msg = read(readfd)
+                    if not msg:
+                        readfd.close()
+                        del connections[fd]
+                        continue
+                    msg = msg.decode()
+                    if(len(msg) == 0):
+                        #user left remove from the list and connections
+                        print('left');
+                    job_queue.put((readfd, msg))
 
