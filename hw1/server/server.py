@@ -15,9 +15,10 @@ def read(fd):
     msg = b''
     try:
         while not msg.endswith(b'\r\n\r\n'):
-            msg += fd.recv(1)
-            if len(msg) == 0:
+            buf = fd.recv(1)
+            if len(buf) == 0:
                 return None
+            msg+=buf
     except (ConnectionResetError, socket.timeout) as e:
         return None
 
@@ -44,41 +45,27 @@ def listen(address):
         break
     return s
 
-def login():
-    while(1):
-        fd = login_queue.get()
-        if fd == -1:
-            thread_exit()
-        try:
-            buf = read(fd)
-            cmd = buf.split(b'\r\n\r\n')[0]
-            if cmd == b'SHUTDOWN':
-                thread_exit();
-            if cmd != b'ME2U':
-                raise Exception()
-            fd.sendall(b'U2EM\r\n\r\n')
-            printv("U2EM")
-            buf = read(fd)
-            cmd,msg = buf.split(b' ')
-            if cmd != b'IAM':
-                raise Exception()
-            name = msg.split(b'\r\n\r\n')[0]
-            name = name.decode()
-            with lock:
-                if name in users:
-                    fd.sendall(b'ETAKEN\r\n\r\n')
-                    printv("ETAKEN")
-                    fd.close()
-                    return
-                fds[name] = fd
-                users[fd] = name
-            fd.sendall(b'MAI\r\n\r\n')
-            printv("MAI")
-            fd.sendall(f'MOTD {MOTD}\r\n\r\n'.encode())
-            printv(f"MOTD {MOTD}")
-            epoll.register(fd.fileno(), select.EPOLLIN)
-        except:
+def me2u(fd, cmd):
+        fd.sendall(b'U2EM\r\n\r\n')
+        printv("U2EM")
+
+def iam(fd,cmd):
+    name = cmd.split('\r\n\r\n')[0]
+    with lock:
+        if name in fds:
+            fd.sendall(b'ETAKEN\r\n\r\n')
+            printv("ETAKEN")
+            del connections[fd.fileno()]
+            epoll.unregister(fd.fileno())
             fd.close()
+            return
+        fds[name] = fd
+        users[fd] = name
+    fd.sendall(b'MAI\r\n\r\n')
+    printv("MAI")
+    fd.sendall(f'MOTD {MOTD}\r\n\r\n'.encode())
+    printv(f"MOTD {MOTD}")
+
 
 def send_ot(readfd, msg):
     receiver_name = msg.split('\r\n\r\n')[0]
@@ -132,8 +119,7 @@ def shutdown():
         if cmd == b'SHUTDOWN':
             thread_exit();
         fd.close()
-    login_queue.put(-1)
-    for n in range(len(threads)-1):
+    for n in range(len(threads)):
         job_queue.put((-1,b''))
     for t in threads:
         t.join()
@@ -200,7 +186,9 @@ if __name__ == '__main__':
             'LISTU': send_utsil,
             'TO': send_from,
             'MORF': send_ot,
-            'BYE': send_off
+            'BYE': send_off,
+            'ME2U': me2u,
+            'IAM': iam
             }
 
     stdin_handlers = {
@@ -215,10 +203,6 @@ if __name__ == '__main__':
     if not s:
         print('error in listen')
         exit(1)
-
-    t = Thread(target=login)
-    t.start()
-    threads.append(t)
 
     for i in range(n_workers):
         t = Thread(target=handle)
@@ -235,10 +219,8 @@ if __name__ == '__main__':
             if fd == s.fileno():
                 (clientsocket, address) = s.accept()
                 clientsocket.settimeout(5)
-                #add to login queue
-                login_queue.put(clientsocket)
-                #add to connections list 
                 connections[clientsocket.fileno()] = clientsocket;
+                epoll.register(clientsocket.fileno(), select.EPOLLIN)
             elif event & select.EPOLLIN:
                 if fd == stdin.fileno():
                     cmd = input().strip()
