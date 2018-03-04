@@ -9,6 +9,8 @@ def read(fd):
     msg = b''
     while not msg.endswith(b'\r\n\r\n'):
         msg += fd.recv(1)
+        if len(msg) == 0:
+            return None
     return msg
 
 
@@ -51,12 +53,13 @@ def login():
                 raise Exception()
             name = msg.split(b'\r\n\r\n')[0]
             name = name.decode()
-            if name in users:
-                fd.sendall(b'ETAKEN\r\n\r\n')
-                fd.close()
-                return
-            fds[name] = fd
-            users[fd] = name
+            with lock:
+                if name in users:
+                    fd.sendall(b'ETAKEN\r\n\r\n')
+                    fd.close()
+                    return
+                fds[name] = fd
+                users[fd] = name
             fd.sendall(b'MAI\r\n\r\n')
             fd.sendall(f'MOTD {MOTD}\r\n\r\n'.encode())
             epoll.register(fd.fileno(), select.EPOLLIN)
@@ -65,41 +68,42 @@ def login():
 
 def send_ot(readfd, msg):
     receiver_name = msg.split('\r\n\r\n')[0]
-    if(receiver_name not in fds):
-        print('Garbage')
-        return
-    fd = fds[receiver_name]
-    sender_name = users[readfd]
-    fd.sendall(f'OT {sender_name}\r\n\r\n'.encode())
+    with lock:
+        if(receiver_name not in fds):
+            print('Garbage')
+            return
+        fd = fds[receiver_name]
+        sender_name = users[readfd]
+        fd.sendall(f'OT {sender_name}\r\n\r\n'.encode())
     return
 
 def send_utsil(readfd, msg):
-    readfd.sendall(b'UTSIL ')
-    for user in users :
-        readfd.sendall(f'{users[user]} '.encode())
-    readfd.sendall(b'\r\n\r\n')
+    with lock:
+        send_msg = 'UTSIL ' + ' '.join(users.keys())+'\r\n\r\n'
+        readfd.sendall(send_msg.encode())
     return
 
 def send_from(readfd, msg):
     receiver_name, msg = msg.split(' ', 1)
-
-    if(receiver_name not in fds):
-        readfd.sendall(f'EDNE {receiver_name}\r\n\r\n'.encode())
-        return
-    fd = fds[receiver_name]
-    sender_name = users[readfd]
-    fd.sendall(f'FROM {sender_name} {msg}'.encode()) #msg already has /r/n/r/n
+    with lock:
+        if(receiver_name not in fds):
+            readfd.sendall(f'EDNE {receiver_name}\r\n\r\n'.encode())
+            return
+        fd = fds[receiver_name]
+        sender_name = users[readfd]
+        fd.sendall(f'FROM {sender_name} {msg}'.encode()) #msg already has /r/n/r/n
     return
 
 def send_off(readfd, msg):
-    sender_name = users[readfd]
-    readfd.sendall(b'EYB\r\n\r\n')
-    del users[readfd]
-    del fds[sender_name]
-    for user in users:
-        user.sendall(f'UOFF {sender_name}\r\n\r\n'.encode())
-    epoll.unregister(readfd.fileno())
-    readfd.close
+    with lock:
+        sender_name = users[readfd]
+        readfd.sendall(b'EYB\r\n\r\n')
+        del users[readfd]
+        del fds[sender_name]
+        for user in users:
+            user.sendall(f'UOFF {sender_name}\r\n\r\n'.encode())
+        epoll.unregister(readfd.fileno())
+        readfd.close
     return
 
 def shutdown():
@@ -151,6 +155,7 @@ if __name__ == '__main__':
     global epoll
     job_queue = Queue()
     login_queue = Queue()
+    lock = threading.Lock()
     users = {}
     fds = {}
 
@@ -209,6 +214,10 @@ if __name__ == '__main__':
             else:
                 readfd = connections[fd]
                 msg = read(readfd)
+                if not msg:
+                    readfd.close()
+                    del connections[fd]
+                    continue
                 msg = msg.decode()
                 job_queue.put((readfd, msg))
 
