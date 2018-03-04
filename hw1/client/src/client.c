@@ -74,6 +74,7 @@ int main(int argc, char** argv){
         exit(EXIT_FAILURE);
     }
 
+    log_it("connection established");
     login(argv[argc-3], sockfd);
 
     // epoll stuff
@@ -111,6 +112,7 @@ int main(int argc, char** argv){
         perror("sigprocmask");
         exit(EXIT_FAILURE);
     }
+    log_it("epoll created");
     while(0xCAFE){
         //wait for signal on either STDIN or Socket
         ndfs = epoll_wait(e_fd, events, sockfd, -1);

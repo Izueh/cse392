@@ -197,7 +197,6 @@ if __name__ == '__main__':
     epoll.register(stdin.fileno(), select.EPOLLIN)
     connections = {}
     while 1:
-        print('here')
         l = epoll.poll(10)
         for fd, event in l:
             if fd == stdin.fileno():
@@ -207,11 +206,13 @@ if __name__ == '__main__':
                         else print('invalid command')
             elif fd == s.fileno():
                 (clientsocket, address) = s.accept()
+                clientsocket.settimeout(5)
                 #add to login queue
                 login_queue.put(clientsocket)
                 #add to connections list 
                 connections[clientsocket.fileno()] = clientsocket;
             else:
+                print('here')
                 readfd = connections[fd]
                 msg = read(readfd)
                 if not msg:
@@ -219,5 +220,8 @@ if __name__ == '__main__':
                     del connections[fd]
                     continue
                 msg = msg.decode()
+                if(len(msg) == 0):
+                    #user left remove from the list and connections
+                    print('left');
                 job_queue.put((readfd, msg))
 
