@@ -67,51 +67,48 @@ def iam(fd,cmd):
     printv(f"MOTD {MOTD}")
 
 
-def send_ot(readfd, msg):
+def send_ot(fd, msg):
     receiver_name = msg.split('\r\n\r\n')[0]
     with lock:
         if(receiver_name not in fds):
             print('Garbage')
             return
         fd = fds[receiver_name]
-        sender_name = users[readfd]
+        sender_name = users[fd]
         fd.sendall(f'OT {sender_name}\r\n\r\n'.encode())
     printv(f"OT {sender_name}")
     return
 
-def send_utsil(readfd, msg):
+def send_utsil(fd, msg):
     with lock:
         ul = ' '.join(fds.keys())
-        send_msg = f'UTSIL {ul}\r\n\r\n' 
-        readfd.sendall(send_msg.encode())
+        send_msg = f'UTSIL {ul}\r\n\r\n'
+        fd.sendall(send_msg.encode())
     printv(f"{send_msg[:-4]}")
     return
 
-def send_from(readfd, msg):
+def send_from(fd, msg):
     receiver_name, msg = msg.split(' ', 1)
     with lock:
         if(receiver_name not in fds):
-            readfd.sendall(f'EDNE {receiver_name}\r\n\r\n'.encode())
+            fd.sendall(f'EDNE {receiver_name}\r\n\r\n'.encode())
             printv(f"EDNE {receiver_name}")
             return
         fd = fds[receiver_name]
-        sender_name = users[readfd]
+        sender_name = users[fd]
         fd.sendall(f'FROM {sender_name} {msg}'.encode()) #msg already has /r/n/r/n
         printv(f"FROM {sender_name} {msg[:-4]}")
     return
 
-def send_off(readfd, msg):
+def send_off(fd, msg):
     with lock:
-        sender_name = users[readfd]
-        readfd.sendall(b'EYB\r\n\r\n')
-        del users[readfd]
+        sender_name = users[fd]
+        fd.sendall(b'EYB\r\n\r\n')
+        del users[fd]
         del fds[sender_name]
-        del connections[readfd.fileno()]
         for user in users:
             user.sendall(f'UOFF {sender_name}\r\n\r\n'.encode())
             printv(f"FROM {sender_name} {msg}")
-        epoll.unregister(readfd.fileno())
-        readfd.close
     return
 
 def shutdown():
@@ -148,7 +145,7 @@ def handle():
             cmd = msg.split('\r\n\r\n')[0]
             tail = ''
         if cmd in socket_handlers:
-            socket_handlers[cmd](readfd, tail) 
+            socket_handlers[cmd](fd, tail) 
         else:
             epoll.unregister(fd.fileno())
             fd.close()
@@ -214,7 +211,7 @@ if __name__ == '__main__':
     epoll.register(stdin.fileno(), select.EPOLLIN)
     connections = {}
     while 1:
-        l = epoll.poll(10)
+        l = epoll.poll(timeout=10, maxevents=1)
         for fd, event in l:
             if fd == s.fileno():
                 (clientsocket, address) = s.accept()
@@ -227,13 +224,15 @@ if __name__ == '__main__':
                     stdin_handlers[cmd]() if cmd in stdin_handlers \
                             else print('invalid command')
                 else:
-                    readfd = connections[fd]
+                    with lock:
+                        readfd = connections[fd]
                     msg = read(readfd)
                     if not msg:
                         with lock:
-                            user = users[readfd]
-                            del fds[user]
-                            del users[readfd]
+                            if readfd in users:
+                                user = users[readfd]
+                                del fds[user]
+                                del users[readfd]
                             readfd.close()
                             del connections[fd]
                         continue
