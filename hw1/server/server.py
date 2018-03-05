@@ -46,8 +46,8 @@ def listen(address):
     return s
 
 def me2u(fd, cmd):
-        fd.sendall(b'U2EM\r\n\r\n')
-        printv("U2EM")
+    fd.sendall(b'U2EM\r\n\r\n')
+    printv("U2EM")
 
 def iam(fd,cmd):
     name = cmd.split('\r\n\r\n')[0]
@@ -55,9 +55,6 @@ def iam(fd,cmd):
         if name in fds:
             fd.sendall(b'ETAKEN\r\n\r\n')
             printv("ETAKEN")
-            del connections[fd.fileno()]
-            epoll.unregister(fd.fileno())
-            fd.close()
             return
         fds[name] = fd
         users[fd] = name
@@ -236,6 +233,7 @@ if __name__ == '__main__':
                                 del users[readfd]
                             readfd.close()
                             del connections[fd]
+                            epoll.unregister(fd)
                         continue
                     msg = msg.decode()
                     job_queue.put((readfd, msg))
