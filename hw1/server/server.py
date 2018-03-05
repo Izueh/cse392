@@ -55,6 +55,7 @@ def iam(fd,cmd):
         if name in fds:
             fd.sendall(b'ETAKEN\r\n\r\n')
             printv("ETAKEN")
+            fd.shutdown(socket.SHUT_WR)
             return
         fds[name] = fd
         users[fd] = name
@@ -145,8 +146,7 @@ def handle():
         if cmd in socket_handlers:
             socket_handlers[cmd](fd, tail)
         else:
-            epoll.unregister(fd.fileno())
-            fd.close()
+            fd.shutdown(socket.SHUT_WR)
 
 
 
