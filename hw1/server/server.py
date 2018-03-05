@@ -107,7 +107,7 @@ def send_off(fd, msg):
         del fds[sender_name]
         for user in users:
             user.sendall(f'UOFF {sender_name}\r\n\r\n'.encode())
-            printv(f"FROM {sender_name} {msg}")
+            printv(f"UOFF {sender_name} {msg}")
     return
 
 def shutdown():
@@ -231,6 +231,10 @@ if __name__ == '__main__':
                                 user = users[readfd]
                                 del fds[user]
                                 del users[readfd]
+                                for u in users:
+                                    u.sendall(f'UOFF {user}\r\n\r\n'.encode())
+                                    printv(f"UOFF {user}")
+
                             readfd.close()
                             del connections[fd]
                             epoll.unregister(fd)

@@ -69,6 +69,11 @@ void command_action(char* msg, int sockfd){
             printf("\e[31m\e[1minvalid command\e[0m\n");
             return;
         }
+        user_info = ul_find(user);
+        if(user_info){
+            printf("\e[31mChat is already open for user\e[0m");
+            return;
+        }
         user_info = malloc(sizeof(user_list));
         memset(user_info,0, sizeof(user_list));
         dprintf(sockfd, "TO %s %s\r\n\r\n", user, send_msg);
