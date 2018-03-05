@@ -71,7 +71,7 @@ void command_action(char* msg, int sockfd){
         }
         user_info = ul_find(user);
         if(user_info){
-            printf("\e[31mChat is already open for user\e[0m");
+            printf("\e[31mChat is already open for user\n\e[0m");
             return;
         }
         user_info = malloc(sizeof(user_list));
