@@ -67,18 +67,6 @@ def iam(fd,cmd):
     printv(f"MOTD {MOTD}")
 
 
-def send_ot(fd, msg):
-    receiver_name = msg.split('\r\n\r\n')[0]
-    with lock:
-        if(receiver_name not in fds):
-            print('Garbage')
-            return
-        fd = fds[receiver_name]
-        sender_name = users[fd]
-        fd.sendall(f'OT {sender_name}\r\n\r\n'.encode())
-    printv(f"OT {sender_name}")
-    return
-
 def send_utsil(fd, msg):
     with lock:
         ul = ' '.join(fds.keys())
@@ -87,18 +75,31 @@ def send_utsil(fd, msg):
     printv(f"{send_msg[:-4]}")
     return
 
-def send_from(fd, msg):
+def send_ot(readfd, msg):
+    receiver_name = msg.split('\r\n\r\n')[0]
+    with lock:
+        if(receiver_name not in fds):
+            print('Garbage')
+            return
+        fd = fds[receiver_name]
+        sender_name = users[readfd]
+        fd.sendall(f'OT {sender_name}\r\n\r\n'.encode())
+        printv(f"OT {sender_name}")
+        return
+
+def send_from(readfd, msg):
     receiver_name, msg = msg.split(' ', 1)
     with lock:
         if(receiver_name not in fds):
-            fd.sendall(f'EDNE {receiver_name}\r\n\r\n'.encode())
+            readfd.sendall(f'EDNE {receiver_name}\r\n\r\n'.encode())
             printv(f"EDNE {receiver_name}")
             return
-        fd = fds[receiver_name]
-        sender_name = users[fd]
-        fd.sendall(f'FROM {sender_name} {msg}'.encode()) #msg already has /r/n/r/n
-        printv(f"FROM {sender_name} {msg[:-4]}")
+    fd = fds[receiver_name]
+    sender_name = users[readfd]
+    fd.sendall(f'FROM {sender_name} {msg}'.encode()) #msg already has /r/n/r/n
+    printv(f"FROM {sender_name} {msg[:-4]}")
     return
+
 
 def send_off(fd, msg):
     with lock:
@@ -145,7 +146,7 @@ def handle():
             cmd = msg.split('\r\n\r\n')[0]
             tail = ''
         if cmd in socket_handlers:
-            socket_handlers[cmd](fd, tail) 
+            socket_handlers[cmd](fd, tail)
         else:
             epoll.unregister(fd.fileno())
             fd.close()
