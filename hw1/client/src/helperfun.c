@@ -46,6 +46,7 @@ void logout(int sockfd){
         free(msg);
         free(chat_bin);
         close(sockfd);
+        kill(0, SIGKILL);
     }
 }
 

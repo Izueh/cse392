@@ -12,7 +12,6 @@ int main(int argc, char** argv){
     char* name = argv[2],*initial_msg,*message,*sender;
     printf("\e[32mNow chatting with \e[1m%s\e[0m\n", name);
     struct epoll_event ev, events[MAX_EVENTS];
-    printf("socket1 %d\n", sockfd);
     initial_msg = read_socket_message(sockfd, "\r\n\r\n");
     sender = split_first_word(initial_msg);
     message = split_first_word(sender);
