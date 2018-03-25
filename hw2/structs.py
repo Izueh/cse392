@@ -49,4 +49,25 @@ ip_header = BitStruct(
         optional = Bytewise(BytesInteger((this.header_len - 5) * 4)),
         )
 
-
+tcp_header = BitStruct(
+    source_port = Byteswise(Int16ub),
+    dest_port = Byteswise(Int16ub),
+    seq_num = Byteswise(Int32ub),
+    ack_num = Byteswise(Int32ub),
+    data_offset = Nibble,
+    reserved = BitsInteger(3),
+    control_flags = FlagsEnum(BitsInteger(9),
+                Nonce=0x1,
+                CWR=0x2,
+                ECN_Echo=0x4,
+                Urgent=0x8,
+                Ack=0x10,
+                Push=0x20,
+                Reset=0x40,
+                Sync=0x80,
+                Fin=0x100,
+                ),
+    window_size = Byteswise(Int16ub),
+    check_sum = Byteswise(Int16ub),
+    urgent_point = Byteswise(Int16ub),
+    )
