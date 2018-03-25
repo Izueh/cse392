@@ -40,11 +40,9 @@ if __name__ == '__main__':
     if args.timeout:
         signal.alarm(args.timeout)
 
-    #b = s.recv(MAXLINE)
-    b = b'\xff\xff\xff\xff\xff\xff\x00PV\xc0\x00\x08\x08\x06\x00\x01\x08\x00\x06\x04\x00\x01\x00PV\xc0\x00\x08\xc0\xa8I\x01\x00\x00\x00\x00\x00\x00\xc0\xa8I\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-    hexdump.dump(b)
-    eth = eth_header.parse(b)
-    ip = ip_header.parse(b[14:])
-    print(f'\n{eth}')
-    print(f'\n{ip}')
+    while not done:
+        b = s.recv(MAXLINE)
+        eth = eth_header.parse(b)
+        if eth.types == 'IPv4':
+            ip = ip_header.parse(b[14:])
 

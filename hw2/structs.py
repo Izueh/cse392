@@ -15,7 +15,7 @@ eth_header = Struct(
         )
 
 ip_header = Struct(
-        version = BitStruct(Octet,
+        info = BitStruct(Octet,
             version=Nibble,
             header_len=Nibble,
             ),
