@@ -1,6 +1,9 @@
 from construct.core import Struct
-from construct import Enum, Int16ub, Bytes, BytesInteger,BitStruct,BitsInteger,Int8ub,Nibble,FlagsEnum,Int32ub, Octet, Short, Bytewise, this
+from construct import Enum, Int16ub, Bytes, BytesInteger,BitStruct,BitsInteger,Int8ub,Nibble,FlagsEnum,Int32ub, Octet, Short, Bytewise, this, RepeatUntil
 
+
+def byte_to_string(obj, ctx):
+        return obj.decode('utf-8')
 
 eth_header = Struct(
         mac_dest=BytesInteger(6),
@@ -78,4 +81,37 @@ udp_header = Struct(
     length = Int16ub,
     check_sum = Int16ub,
     data = BytesInteger(this.length - 8),
+    )
+
+
+
+question_name = BitStruct(
+         length = Octet,
+         string = Bytewise(Bytes(this.length)) * byte_to_string,
+)
+
+question_struct = BitStruct(
+        qname = Bytewise(RepeatUntil(lambda obj,lst,ctx: obj.length == 0, question_name)),
+        qtype = Bytewise(Int16ub),
+        qclass = Bytewise(Int16ub),
+)
+
+
+dns_header = BitStruct(
+    identification = Bytewise(Int16ub),
+    QR = BitsInteger(1),
+    opcode = Nibble,
+    flags = FlagsEnum(Nibble,
+        AA = 0x1,
+        TC = 0x2,
+        RD = 0x4,
+        RA = 0x8,
+        ),
+    zero = BitsInteger(3),
+    rcode = Nibble,
+    question_num = Bytewise(Int16ub),
+    answer_num = Bytewise(Int16ub),
+    authority_num = Bytewise(Int16ub),
+    addition_num = Bytewise(Int16ub),
+    questions = Bytewise(question_struct[this.question_num]),
     )
