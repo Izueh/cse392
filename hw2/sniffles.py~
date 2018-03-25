@@ -45,6 +45,6 @@ if __name__ == '__main__':
     hexdump.dump(b)
     eth = eth_header.parse(b)
     ip = ip_header.parse(b[14:])
-    print(f'\n{eth}')
+
     print(f'\n{ip}')
 
