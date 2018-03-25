@@ -3,7 +3,7 @@ from sys import argv
 import socket
 import signal
 import hexdump
-from structs import eth_header,ip_header, tcp_header
+from structs import eth_header,ip_header, tcp_header, udp_header
 
 
 MAXLINE = 1500 
@@ -43,13 +43,14 @@ if __name__ == '__main__':
     while not done:
         b = s.recv(MAXLINE)
         eth = eth_header.parse(b)
-        print(b)
-        print(hexdump.dump(b))
         if eth.types == 'IPv4':
             ip = ip_header.parse(b[14:])
-            print(ip)
+            ip_eth_len = (ip.header_len * 4) + 14
             if ip.protocol == 'TCP':
-                ip_eth_len = (ip.header_len * 4) + 14
                 tcp = tcp_header.parse(b[ip_eth_len:])
-                print(tcp)
+            elif ip.protocol == 'UDP':
+                udp = udp_header.parse(b[ip_eth_len:])
+                print(b)
+                print(hexdump.dump(b))
+                print(udp)
 

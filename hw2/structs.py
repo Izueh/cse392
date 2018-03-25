@@ -71,3 +71,11 @@ tcp_header = BitStruct(
     check_sum = Bytewise(Int16ub),
     urgent_point = Bytewise(Int16ub),
     )
+
+udp_header = Struct(
+    source_port = Int16ub,
+    dest_port = Int16ub,
+    length = Int16ub,
+    check_sum = Int16ub,
+    data = BytesInteger(this.length - 8),
+    )
