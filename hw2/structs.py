@@ -50,10 +50,10 @@ ip_header = BitStruct(
         )
 
 tcp_header = BitStruct(
-    source_port = Byteswise(Int16ub),
-    dest_port = Byteswise(Int16ub),
-    seq_num = Byteswise(Int32ub),
-    ack_num = Byteswise(Int32ub),
+    source_port = Bytewise(Int16ub),
+    dest_port = Bytewise(Int16ub),
+    seq_num = Bytewise(Int32ub),
+    ack_num = Bytewise(Int32ub),
     data_offset = Nibble,
     reserved = BitsInteger(3),
     control_flags = FlagsEnum(BitsInteger(9),
@@ -67,7 +67,7 @@ tcp_header = BitStruct(
                 Sync=0x80,
                 Fin=0x100,
                 ),
-    window_size = Byteswise(Int16ub),
-    check_sum = Byteswise(Int16ub),
-    urgent_point = Byteswise(Int16ub),
+    window_size = Bytewise(Int16ub),
+    check_sum = Bytewise(Int16ub),
+    urgent_point = Bytewise(Int16ub),
     )

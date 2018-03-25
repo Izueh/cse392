@@ -3,7 +3,7 @@ from sys import argv
 import socket
 import signal
 import hexdump
-from structs import eth_header,ip_header
+from structs import eth_header,ip_header, tcp_header
 
 
 MAXLINE = 1500 
@@ -51,4 +51,5 @@ if __name__ == '__main__':
             if ip.protocol == 'TCP':
                 ip_eth_len = (ip.header_len * 4) + 14
                 tcp = tcp_header.parse(b[ip_eth_len:])
+                print(tcp)
 
