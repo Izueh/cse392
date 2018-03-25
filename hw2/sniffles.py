@@ -45,4 +45,7 @@ if __name__ == '__main__':
         eth = eth_header.parse(b)
         if eth.types == 'IPv4':
             ip = ip_header.parse(b[14:])
+            print(b)
+            print(hexdump.dump(b))
+            print(ip)
 
