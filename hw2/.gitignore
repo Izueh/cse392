@@ -1,6 +1,7 @@
 venv/
 *.pyo
 *.pyc
+__pycache__/
 *.*~
 *.swp
 *.swo
