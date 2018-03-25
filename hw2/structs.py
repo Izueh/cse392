@@ -96,6 +96,16 @@ question_struct = BitStruct(
         qclass = Bytewise(Int16ub),
 )
 
+answer_struct = BitStruct(
+        qname = Bytewise(RepeatUntil(lambda obj,lst,ctx: obj.length == 0, question_name)),
+        qtye  = Bytewise(Int16ub),
+        qclass = Bytewise(Int16ub),
+        ttl = Bytewise(Int16ub),
+        rdlength = Bytewise(Int16ub),
+        rddata = Bytewise(Bytes(this.rdlength)),
+)
+
+
 
 dns_header = BitStruct(
     identification = Bytewise(Int16ub),
@@ -114,4 +124,5 @@ dns_header = BitStruct(
     authority_num = Bytewise(Int16ub),
     addition_num = Bytewise(Int16ub),
     questions = Bytewise(question_struct[this.question_num]),
+    answers = Bytewise(answer_struct[this.answer_num]),
     )
