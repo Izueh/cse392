@@ -1,5 +1,7 @@
-*~
-.*~
+venv/
+*.pyo
+*.pyc
+*.*~
 *.swp
 *.swo
 node_modules/
