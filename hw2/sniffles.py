@@ -33,19 +33,22 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGALRM, handler)
     #signal.signal(signal.SIGINT, handler)
-    
+
     s = socket.socket(socket.AF_PACKET,socket.SOCK_RAW,socket.htons(3))
     s.bind((args.interface, 0))
-        
+
     if args.timeout:
         signal.alarm(args.timeout)
 
     while not done:
         b = s.recv(MAXLINE)
         eth = eth_header.parse(b)
+        print(b)
+        print(hexdump.dump(b))
         if eth.types == 'IPv4':
             ip = ip_header.parse(b[14:])
-            print(b)
-            print(hexdump.dump(b))
             print(ip)
+            if ip.protocol == 'TCP':
+                ip_eth_len = (ip.header_len * 4) + 14
+                tcp = tcp_header.parse(b[ip_eth_len:])
 

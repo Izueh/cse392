@@ -1,5 +1,6 @@
 from construct.core import Struct
-from construct import Enum, Int16ub, Bytes, BytesInteger,BitStruct,BitsInteger,Int8ub,Nibble,FlagsEnum,Int32ub, Octet, Short, Bytewise
+from construct import Enum, Int16ub, Bytes, BytesInteger,BitStruct,BitsInteger,Int8ub,Nibble,FlagsEnum,Int32ub, Octet, Short, Bytewise, this
+
 
 eth_header = Struct(
         mac_dest=BytesInteger(6),
@@ -45,6 +46,7 @@ ip_header = BitStruct(
         ip_checksum = Bytewise(Int16ub),
         ip_src = Bytewise(Int32ub),
         ip_dest = Bytewise(Int32ub),
+        optional = Bytewise(BytesInteger((this.header_len - 5) * 4)),
         )
 
 
