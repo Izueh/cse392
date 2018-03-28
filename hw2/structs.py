@@ -3,7 +3,7 @@ from construct import Enum, Int16ub, Bytes, BytesInteger,BitStruct,BitsInteger,I
 
 
 def byte_to_string(obj, ctx):
-        return obj.decode('utf-8')
+    return obj.decode('utf-8')
 
 eth_header = Struct(
         mac_dest=BytesInteger(6),
