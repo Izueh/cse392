@@ -23,6 +23,55 @@ def handler(signum, frame):
     global done
     done = True
 
+def get_flags(flags):
+    flags = ''
+    for f in ip.flags:
+        if ip.flags[f] and f != '_flagsenum':
+            flags += f'{f} '
+    return flags
+
+def printIP(ip):
+    print(f'''IPv4(Protocol={ip.protocol}, FSrcIP={ip.ip_src}, DestIP={ip.ip_dest}, flags={get_flags(ip.flags)},
+     FragmentOffset={ip.fragment_offset}, TTL={ip.ttl}, CheckSum={ip.ip_checksum},Version={ip.version},
+     HeadLen={ip.header_len}, ServiceType={ip.service_type}, TotalLen={ip.total_len}, Optional={ip.optional} )\n''')
+
+def printTCP(tcp):
+    print(f'''TCP(SrcPort={tcp.source_port}, DestPort={tcp.dest_port}, SeqNum={tcp.seq_num}, AckNum={tcp.ack_num},
+    DataOff={tcp.data_offset}, Flags={get_flags(tcp.control_flags)}, WinSize={tcp.window_size},
+    ChkSum={tcp.checksum}, UrgentPtr={tcp.urgent_point})''')
+
+def printUDP(udp):
+    print(f'UDP(SrcPort={udp.source_port}, DestPort={udp.dest_port}, Length={udp.length}, Checksum={udp.checksum})\n')
+
+def printDNS(dns):
+    print(f'''DNS(id={dns.identification}, QR={dns.flags.QR}, OPCode={dns.flags.opcode}, flags={get_flags(dns.flags.flags)},
+    rcode={dns.flags.rcode}, question_num={dns.question_num}, answer_num={dns.answer_num}, additional_num={dns.authority_num},
+    addition_num = {dns.addition_num} \n''')
+
+    print('Questions:')
+    for que in dns.questions:
+        print(f'\tQname={que.qname}, Qtype={que.qtype}, Qclass={que.qclass}')
+
+    print('Answers:')
+    for ans in dns.answers:
+        print(f'''\tAname={ans.aname}, Qtype={ans.atype}, Qclass={ans.aclass},
+        TTL={ans.ttl}, RDLength={ans.rdlength}, RDData={ans.rddata}''')
+
+    print('Authority:')
+    for ans in dns.authority:
+        print(f'''\tAname={ans.aname}, Qtype={ans.atype}, Qclass={ans.aclass},
+        TTL={ans.ttl}, RDLength={ans.rdlength}, RDData={ans.rddata}''')
+
+    print('Addition:')
+    for ans in dns.addition:
+        print(f'''\tAname={ans.aname}, Qtype={ans.atype}, Qclass={ans.aclass},
+        TTL={ans.ttl}, RDLength={ans.rdlength}, RDData={ans.rddata}''')
+
+def printARP(arp):
+    print(f'''(ARP Hardware Type={arp.hward_type}, Protocol Type={arp.protocol_type}, Hardware Addr Len={arp.hward_addr_len},
+    Protocol Addr Len = {arp.protocol_addr_len}, opcode = {arp.opcode}, Src Hwd Addr={arp.src_hward_addr},
+    Src Proto Addr={arp.src_proto_addr}, Dest Hwd Addr={arp.dest_hward_addr}, Dest Proto Addr={arp.dest_proto_addr}\n''')
+
 
 if __name__ == '__main__':
     args = parse_args()
@@ -39,10 +88,6 @@ if __name__ == '__main__':
         signal.alarm(args.timeout)
 
 
-    b = b'\xae\xa2\x81\x80\x00\x01\x00\x03\x00\x00\x00\x01\x03\x77\x77\x77\x05\x67\x6d\x61\x69\x6c\x03\x63\x6f\x6d\x00\x00\x01\x00\x01\xc0\x0c\x00\x05\x00\x01\x00\x00\x06\xc1\x00\x0e\x04\x6d\x61\x69\x6c\x06\x67\x6f\x6f\x67\x6c\x65\xc0\x16\xc0\x2b\x00\x05\x00\x01\x00\x02\x7a\xc3\x00\x0f\x0a\x67\x6f\x6f\x67\x6c\x65\x6d\x61\x69\x6c\x01\x6c\xc0\x30\xc0\x45\x00\x01\x00\x01\x00\x00\x00\xc2\x00\x04\xac\xd9\x06\xc5\x00\x00\x29\x10\x00\x00\x00\x00\x00\x00\x00'
-    print(dns_header.parse(b))
-
-"""
     while not done:
         b = s.recv(MAXLINE)
         eth = eth_header.parse(b)
@@ -50,25 +95,20 @@ if __name__ == '__main__':
         if eth.types == 'IPv4':
             ip = ip_header.parse(b[14:])
             ip_eth_len = (ip.header_len * 4) + 14
-            print(f'''IPv4(FSrcIP={ip.ip_src}, DestIP={ip.ip_dest}, flags={ip.flags}, FragmentOffset={ip.fragment_offset}, \n
-                    TTL={ip.ttl}, Protocol={ip.protocol}, CheckSum={ip.ip_checksum}, Optional={ip.optional}, Version={ip.version}, \n
-                    HeadLen={ip.header_len}, ServiceType={ip.service_type}, TotalLen={ip.total_len} \n''')
+            printIP(ip)
             if ip.protocol == 'TCP':
                 tcp = tcp_header.parse(b[ip_eth_len:])
-                print(f'''TCP(SrcPort={tcp.source_port}, DestPort={tcp.dest_port}, SeqNum={tcp.seq_num}, AckNum={tcp.ack_num},
-                        DataOff={tcp.data_offset}, Flags={tcp.control_flags}, WinSize={tcp.window_size},
-                        ChkSum={tcp.checksum}, UrgentPtr={tcp.urgent_point})''')
+                printTCP(tcp)
                 if(tcp.dest_port == 53 or tcp.source_port == 53):
                     dns = dns_header.parse(tcp.data)
-                    print(dns)
+                    printDNS(dns)
             elif ip.protocol == 'UDP':
                 udp = udp_header.parse(b[ip_eth_len:])
-                print(f'UDP(SrcPort={udp.source_port}, DestPort={udp.dest_port}, Length={udp.length}, Checksum={udp.checksum})\n')
+                printUDP(udp)
                 if(udp.dest_port == 53 or udp.source_port == 53):
                     dns = dns_header.parse(udp.data)
-                    print(dns)
+                    printDNS(dns)
         elif eth.types == 'ARP':
             arp = arp_header.parse(b[14:])
             print(arp)
-        print('-----------------------------------------------')
-"""
+        print('-----------------------------------------------------------------------------')

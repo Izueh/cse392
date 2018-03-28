@@ -177,12 +177,12 @@ question_struct = Struct(
 
 # DNS Answer Struct
 answer_struct = Struct(
-        qname = AName,
-        qtype  = QTypeEnum,
-        qclass = QClassEnum,
+        aname = AName,
+        atype  = QTypeEnum,
+        aclass = QClassEnum,
         ttl = Int32sb,
         rdlength = Int16ub,
-        rddata = Switch(this.qtype, {
+        rddata = Switch(this.atype, {
             'A': IPAddress,
             'CNAME': Bytes(this.rdlength),
         },  default=Bytes(this.rdlength)
@@ -212,6 +212,6 @@ dns_header = Struct(
     addition_num = Int16ub,
     questions = question_struct[this.question_num],
     answers = answer_struct[this.answer_num],
-#    authority = Bytewise(answer_struct[this.authority_num]),
-#    addition = Bytewise(answer_struct[this.addition_num]),
+    authority = answer_struct[this.authority_num],
+    addition = answer_struct[this.addition_num],
     )
