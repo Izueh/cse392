@@ -11,9 +11,20 @@ IPAddress = ExprAdapter(Byte[4],
         decoder = lambda obj,ctx: f'{obj[0]}.{obj[1]}.{obj[2]}.{obj[3]}',
         encoder = obj_-1)
 
-Name = ExprAdapter(RepeatUntil(len_(obj_)==0, PascalString(Byte, "ascii")),
+QName = ExprAdapter(RepeatUntil(len_(obj_)==0, PascalString(Byte, "ascii")),
         decoder = lambda obj,ctx:  ".".join(obj[:-1]),
         encoder = obj_-1)
+
+
+aname_struct = Struct(
+    length = Peek(Int8ub),
+    pointer = Computed(this.length & 0XC0 == 0xC0),
+    label = IfThenElse(this.pointer, Int16ub, PascalString(Byte, "ascii")),
+)
+
+AName = ExprAdapter(RepeatUntil(obj_.pointer | (obj_.length==0) , aname_struct),
+      decoder= lambda obj,ctx: obj[0].label if obj[0].pointer else '.'.join((o.label for o in obj[:-1])),
+      encoder=obj_-1)
 
 # Ethernet Header
 eth_header = Struct(
@@ -131,7 +142,7 @@ udp_header = Struct(
 
 # DNS
 # Question/Answer Type Enum
-QTypeEnum = Enum(Bytewise(Int16ub),
+QTypeEnum = Enum(Int16ub,
                  A=0x1,
                  NS=0x2,
                  MD=0x3,
@@ -150,7 +161,7 @@ QTypeEnum = Enum(Bytewise(Int16ub),
                  TXT=0x10,
                     )
 # Question/Answer Class Enum
-QClassEnum = Enum(Bytewise(Int16ub),
+QClassEnum = Enum(Int16ub,
                   IN=0x1,
                   CS=0x2,
                   CH=0x3,
@@ -158,25 +169,23 @@ QClassEnum = Enum(Bytewise(Int16ub),
                  )
 
 # DNS Questoin Struct
-question_struct = BitStruct(
-        qname = Bytewise(Name),
+question_struct = Struct(
+        qname = QName,
         qtype = QTypeEnum,
         qclass = QClassEnum,
 )
 
 # DNS Answer Struct
-answer_struct = BitStruct(
-        qname = Bytewise(Name),
+answer_struct = Struct(
+        qname = AName,
         qtye  = QTypeEnum,
         qclass = QClassEnum,
-        ttl = Bytewise(Int32sb),
-        rdlength = Bytewise(Int16ub),
-        rddata = Bytewise(Bytes(this.rdlength)),
+        ttl = Int32sb,
+        rdlength = Int16ub,
+        rddata = Bytes(this.rdlength),
 )
 
-# DNS Header 
-dns_header = BitStruct(
-    identification = Bytewise(Int16ub),
+dns_flag = BitStruct(
     QR = BitsInteger(1),
     opcode = Nibble,
     flags = FlagsEnum(Nibble,
@@ -187,12 +196,18 @@ dns_header = BitStruct(
         ),
     zero = BitsInteger(3),
     rcode = Nibble,
-    question_num = Bytewise(Int16ub),
-    answer_num = Bytewise(Int16ub),
-    authority_num = Bytewise(Int16ub),
-    addition_num = Bytewise(Int16ub),
-    questions = Bytewise(question_struct[this.question_num]),
-    answers = Bytewise(answer_struct[this.answer_num]),
-    authority = Bytewise(answer_struct[this.authority_num]),
-    addition = Bytewise(answer_struct[this.addition_num]),
+)
+
+# DNS Header 
+dns_header = Struct(
+    identification = Int16ub,
+    flags = Int16ub,
+    question_num = Int16ub,
+    answer_num = Int16ub,
+    authority_num = Int16ub,
+    addition_num = Int16ub,
+    questions = question_struct[this.question_num],
+    answers = answer_struct[this.answer_num],
+#    authority = Bytewise(answer_struct[this.authority_num]),
+#    addition = Bytewise(answer_struct[this.addition_num]),
     )
