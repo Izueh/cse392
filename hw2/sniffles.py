@@ -3,11 +3,9 @@ from sys import argv
 import socket
 import signal
 import hexdump
-from structs import eth_header,ip_header, tcp_header, udp_header, dns_header, question_struct
+from structs import eth_header,ip_header, tcp_header, udp_header, dns_header, question_struct, arp_header
 
-
-MAXLINE = 1500 
-
+MAXLINE = 1500
 
 def parse_args():
         parser = argparse.ArgumentParser()
@@ -52,10 +50,14 @@ if __name__ == '__main__':
         if eth.types == 'IPv4':
             ip = ip_header.parse(b[14:])
             ip_eth_len = (ip.header_len * 4) + 14
-            print(f'IPv4(FSrcIP={ip.ip_src}, DestIP={ip.ip_dest}, flags={ip.flags}, FragmentOffset={ip.fragment_offset}, TTL={ip.ttl}, Protocol={ip.protocol}, CheckSum={ip.ip_checksum}, Optional={ip.optional}, Version={ip.version}, HeadLen={ip.header_len}, ServiceType={ip.service_type}, TotalLen={ip.total_len} \n')
+            print(f'''IPv4(FSrcIP={ip.ip_src}, DestIP={ip.ip_dest}, flags={ip.flags}, FragmentOffset={ip.fragment_offset}, \n
+                    TTL={ip.ttl}, Protocol={ip.protocol}, CheckSum={ip.ip_checksum}, Optional={ip.optional}, Version={ip.version}, \n
+                    HeadLen={ip.header_len}, ServiceType={ip.service_type}, TotalLen={ip.total_len} \n''')
             if ip.protocol == 'TCP':
                 tcp = tcp_header.parse(b[ip_eth_len:])
-                print(f'TCP(SrcPort={tcp.source_port}, DestPort={tcp.dest_port}, SeqNum={tcp.seq_num}, AckNum={tcp.ack_num}, DataOff={tcp.data_offset}, Flags={tcp.control_flags}, WinSize={tcp.window_size}, ChkSum={tcp.checksum}, UrgentPtr={tcp.urgent_point})')
+                print(f'''TCP(SrcPort={tcp.source_port}, DestPort={tcp.dest_port}, SeqNum={tcp.seq_num}, AckNum={tcp.ack_num},
+                        DataOff={tcp.data_offset}, Flags={tcp.control_flags}, WinSize={tcp.window_size},
+                        ChkSum={tcp.checksum}, UrgentPtr={tcp.urgent_point})''')
                 if(tcp.dest_port == 53 or tcp.source_port == 53):
                     dns = dns_header.parse(tcp.data)
                     print(dns)
@@ -65,5 +67,8 @@ if __name__ == '__main__':
                 if(udp.dest_port == 53 or udp.source_port == 53):
                     dns = dns_header.parse(udp.data)
                     print(dns)
+        elif eth.types == 'ARP':
+            arp = arp_header.parse(b[14:])
+            print(arp)
         print('-----------------------------------------------')
 
