@@ -39,26 +39,31 @@ if __name__ == '__main__':
 
     if args.timeout:
         signal.alarm(args.timeout)
+
+
+    b = b'\xf2\x84\x81\x80\x00\x01\x00\x03\x00\x00\x00\x01\x03\x77\x77\x77\x05\x67\x6d\x61\x69\x6c\x03\x63\x6f\x6d\x00\x00\x01\x00\x01\xc0\x0c\x00\x05\x00\x01\x00\x00\xaf\x4f\x00\x0e\x04\x6d\x61\x69\x6c\x06\x67\x6f\x6f\x67\x6c\x65\xc0\x16'
+    print(dns_header.parse(b))
+
+'''
     while not done:
         b = s.recv(MAXLINE)
         eth = eth_header.parse(b)
-        print(eth)
+        print(f'ETH(MacDest={eth.mac_dest}, MacSrc={eth.mac_src}, Type={eth.types})\n')
         if eth.types == 'IPv4':
             ip = ip_header.parse(b[14:])
             ip_eth_len = (ip.header_len * 4) + 14
+            print(f'IPv4(FSrcIP={ip.ip_src}, DestIP={ip.ip_dest}, flags={ip.flags}, FragmentOffset={ip.fragment_offset}, TTL={ip.ttl}, Protocol={ip.protocol}, CheckSum={ip.ip_checksum}, Optional={ip.optional}, Version={ip.version}, HeadLen={ip.header_len}, ServiceType={ip.service_type}, TotalLen={ip.total_len} \n')
             if ip.protocol == 'TCP':
                 tcp = tcp_header.parse(b[ip_eth_len:])
-                if(tcp.dest_port == 52):
+                print(f'TCP(SrcPort={tcp.source_port}, DestPort={tcp.dest_port}, SeqNum={tcp.seq_num}, AckNum={tcp.ack_num}, DataOff={tcp.data_offset}, Flags={tcp.control_flags}, WinSize={tcp.window_size}, ChkSum={tcp.checksum}, UrgentPtr={tcp.urgent_point})')
+                if(tcp.dest_port == 53 or tcp.source_port == 53):
                     dns = dns_header.parse(tcp.data)
-                print(tcp)
+                    print(dns)
             elif ip.protocol == 'UDP':
                 udp = udp_header.parse(b[ip_eth_len:])
-                if(udp.dest_port == 52):
-                    dns = dns_header.prase(udp.data)
-                print(udp)
-
-'''
-    dns = dns_header.parse(b'\xdb\x42\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x03\x77\x77\x77\x0c\x6e\x6f\x72\x74\x68\x65\x61\x73\x74\x65\x72\x6e\x03\x65\x64\x75\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x02\x58\x00\x04\x9b\x21\x11\x44')
-  #  dns = question_struct.parse(b'\x03\x77\x77\x77\x0c\x6e\x6f\x72\x74\x68\x65\x61\x73\x74\x65\x72\x6e\x03\x65\x64\x75\x00\x00\x01\x00\x01')
-    print(dns)
+                print(f'UDP(SrcPort={udp.source_port}, DestPort={udp.dest_port}, Length={udp.length}, Checksum={udp.checksum})\n')
+                if(udp.dest_port == 53 or udp.source_port == 53):
+                    dns = dns_header.parse(udp.data)
+                    print(dns)
+        print('-----------------------------------------------')
 '''
