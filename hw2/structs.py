@@ -178,12 +178,16 @@ question_struct = Struct(
 # DNS Answer Struct
 answer_struct = Struct(
         qname = AName,
-        qtye  = QTypeEnum,
+        qtype  = QTypeEnum,
         qclass = QClassEnum,
         ttl = Int32sb,
         rdlength = Int16ub,
-        rddata = Bytes(this.rdlength),
-)
+        rddata = Switch(this.qtype, {
+            'A': IPAddress,
+            'CNAME': Bytes(this.rdlength),
+        },  default=Bytes(this.rdlength)
+        ),
+    )
 
 dns_flag = BitStruct(
     QR = BitsInteger(1),
