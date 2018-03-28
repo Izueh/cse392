@@ -105,8 +105,6 @@ answer_struct = BitStruct(
         rddata = Bytewise(Bytes(this.rdlength)),
 )
 
-
-
 dns_header = BitStruct(
     identification = Bytewise(Int16ub),
     QR = BitsInteger(1),
@@ -125,4 +123,6 @@ dns_header = BitStruct(
     addition_num = Bytewise(Int16ub),
     questions = Bytewise(question_struct[this.question_num]),
     answers = Bytewise(answer_struct[this.answer_num]),
+    authority = Bytewise(answer_struct[this.authority_num]),
+    addition = Bytewise(answer_struct[this.addition_num]),
     )
