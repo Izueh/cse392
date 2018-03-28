@@ -162,5 +162,5 @@ dns_header = BitStruct(
     questions = Bytewise(question_struct[this.question_num]),
     answers = Bytewise(answer_struct[this.answer_num]),
     authority = Bytewise(answer_struct[this.authority_num]),
-    addition = Byteswise(answer_struct[this.addition_num]),
+    addition = Bytewise(answer_struct[this.addition_num]),
     )
