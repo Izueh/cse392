@@ -201,7 +201,7 @@ dns_flag = BitStruct(
 # DNS Header 
 dns_header = Struct(
     identification = Int16ub,
-    flags = Int16ub,
+    flags = dns_flag,
     question_num = Int16ub,
     answer_num = Int16ub,
     authority_num = Int16ub,
