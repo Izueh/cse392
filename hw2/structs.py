@@ -55,7 +55,7 @@ arp_header = Struct(
         protocol_type = Enum(Int16ub,
             IP=0x800,
                 ),
-        hward_addr_len = Int8ub,
+        hware_addr_len = Int8ub,
         proto_addr_len = Int8ub,
         opcode = Enum(Int16ub,
             REQUEST=0x1,
@@ -64,13 +64,11 @@ arp_header = Struct(
             REPLY_REVERSE=0x4,
             ARP_NAK=0xA,
             ),
-        src_hward_addr = Bytes(this.hward_addr_len),
+        src_hware_addr = Bytes(this.hware_addr_len),
         src_proto_addr = Bytes(this.proto_addr_len),
-        dest_hward_addr = Bytes(this.hward_addr_len),
+        dest_hware_addr = Bytes(this.hware_addr_len),
         dest_proto_addr = Bytes(this.proto_addr_len),
     )
-
-
 
 # IPv4 Header
 ip_header = BitStruct(
@@ -106,7 +104,6 @@ ip_header = BitStruct(
         ip_dest = IPAddress,
         optional = Bytewise(Bytes((this.header_len - 5) * 4)),
         )
-
 # TCP Header
 tcp_header = BitStruct(
     source_port = Bytewise(Int16ub),
