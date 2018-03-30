@@ -27,11 +27,7 @@ def handler(signum, frame):
     done = True
 
 def get_flags(flags):
-    flags = ''
-    for f in ip.flags:
-        if ip.flags[f] and f != '_flagsenum':
-            flags += f'{f} '
-    return flags
+    return ' '.join(filter(lambda x: flags[x] and x!='_flagsenum',flags.keys()))
 
 def printIP(ip):
     print(f'''IPv4(Protocol={ip.protocol}, FSrcIP={ip.ip_src}, DestIP={ip.ip_dest}, flags={get_flags(ip.flags)},
@@ -92,7 +88,7 @@ def write_packet(b, f):
             'idb' : {
                 'block_type' : 0x00000001,
                 'block_len' : 20,
-                'link_type' : 0 if args.interface == 'lo' else 1,
+                'link_type' : 1,
                 'reserved' : 0,
                 'snap_len' : 0,
                 'block_len2' : 20
@@ -125,7 +121,6 @@ if __name__ == '__main__':
     ifs = fcntl.ioctl(s,0x8921,ifr)
     mtu = int.from_bytes(ifs[16:18], byteorder='little')
     MAXLINE = mtu if args.interface != 'lo' else 2**16 
-    print(mtu)
 
     r,w = os.pipe()
     os.set_blocking(w,False)
