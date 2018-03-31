@@ -64,10 +64,14 @@ arp_header = Struct(
             REPLY_REVERSE=0x4,
             ARP_NAK=0xA,
             ),
-        src_hware_addr = IfThenElse(this.hware_type=='ETHERNET',MacAddress, Bytes(this.hware_addr_len)),
-        src_proto_addr = IfThenElse(this.protocol_type =='IP',IPAddress,Bytes(this.proto_addr_len)),
-        dest_hware_addr = IfThenElse(this.hware_type=='ETHERNET',MacAddress, Bytes(this.hware_addr_len)),
-        dest_proto_addr = IfThenElse(this.protocol_type =='IP',IPAddress,Bytes(this.proto_addr_len)),
+        src_hware_addr = IfThenElse(this.hware_type=='ETHERNET',\
+                MacAddress, Bytes(this.hware_addr_len)),
+        src_proto_addr = IfThenElse(this.protocol_type =='IP',\
+                IPAddress,Bytes(this.proto_addr_len)),
+        dest_hware_addr = IfThenElse(this.hware_type=='ETHERNET',\
+                MacAddress, Bytes(this.hware_addr_len)),
+        dest_proto_addr = IfThenElse(this.protocol_type =='IP',\
+                IPAddress,Bytes(this.proto_addr_len)),
     )
 
 # IPv4 Header

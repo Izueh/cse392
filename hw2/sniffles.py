@@ -8,7 +8,7 @@ import fcntl
 import time
 import os
 from structs import eth_header,ip_header, tcp_header, udp_header, dns_header, question_struct, arp_header, AName, answer_struct
-from pcap_structs import shb, epb_head, epb_foot
+from pcap_structs import *
 
 def parse_args():
         parser = argparse.ArgumentParser()
@@ -77,23 +77,6 @@ def write_packet(b, f):
     original_len = len(b)
     padding = 4 - len(b) % 4 if len(b) % 4 else 0
     b += (b'\x00' * padding)
-    a = {
-            'block_type' : 0x0A0D0D0A,
-            'block_len' : 28,
-            'bom' : 0x1A2B3C4D,
-            'major_version' : 1,
-            'minor_version' : 0,
-            'section_len' : 0,
-            'block_len2' : 28,
-            'idb' : {
-                'block_type' : 0x00000001,
-                'block_len' : 20,
-                'link_type' : 1,
-                'reserved' : 0,
-                'snap_len' : 0,
-                'block_len2' : 20
-                }
-            }
     c = {
             'block_type' : 6,
             'block_len' : len(b) + 32,
@@ -102,10 +85,7 @@ def write_packet(b, f):
             'cap_len' : original_len,
             'len' : original_len,
             }
-    f.write(shb.build(a))
-    f.write(epb_head.build(c))
-    f.write(b)
-    f.write(epb_foot.build(c['block_len']))
+    f.write(epb_head.build(c)+b+epb_foot.build(c['block_len']))
 
 if __name__ == '__main__':
     args = parse_args()
@@ -131,7 +111,10 @@ if __name__ == '__main__':
     if args.timeout:
         signal.alarm(args.timeout)
 
-    f = open(args.output,'wb') if args.output else None
+    f = None
+    if args.output:
+        f = open(args.output,'wb')
+        f.write(shb.build(SHB)+idb.build(IDB))
 
     packets = 0
 
