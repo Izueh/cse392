@@ -4,6 +4,26 @@ from json import dumps, loads
 from common.header_structs import difuse_request, difuse_response
 
 
+def read(fd, req):
+    with open('/'.join((file_dir, req['file'])), 'rb') as f:
+        f.seek(req['offset'])
+        data = f.read(req['size'])
+        res = {}
+        res['status'] = 0
+        res['length'] = len(data)
+        fd.send_all(difuse_response.build(res) + data)
+
+
+def write(fd, req):
+    with open('/'.join((file_dir, req['file'])), 'rb') as f:
+        f.seek(req['offset'])
+        f.write(req['data'])
+        res = {}
+        res['status'] = 0
+        res['length'] = 0
+        fd.send_all(difuse_response.build(res))
+
+
 if __name__ == '__main__':
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind((socket.ADDR_ANY, 8080))
