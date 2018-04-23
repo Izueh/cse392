@@ -14,13 +14,13 @@ def list_dir(fd, addr, req):
 def lookup(fd, addr, req):
     filename = req['file']
     print(filename)
-    if filename == '/':
+    if filename == '/' or filename == None:
         res = {}
         data ={'st_mode': 16877, 'st_ctime': 1524460373.0432584, 'st_mtime': 1524460373.0432584, 'st_atime': 1524460373.0432584, 'st_nlink': 2 }
         data = dumps(data).encode('utf-8')
         res['status'] = 0
         res['length'] = len(data)
-        fd.sendall(difuse_response.build(res).data)
+        fd.sendall(difuse_response.build(res)+data)
     elif filename not in file_list:
         res = {}
         res['status'] = 0x01
@@ -29,7 +29,7 @@ def lookup(fd, addr, req):
         fd.sendall(difuse_response.build(res))
     else:
         res = {}
-        data = dumps({'ip': file_list[req['file']]}).encode('utf-8')
+        data = dumps({'ip': file_ip[req['file']]}).encode('utf-8')
         res['status'] = 0
         res['length'] = len(data)
         fd.sendall(difuse_response.build(res)+data)
@@ -57,7 +57,7 @@ def leave(fd, addr, req):
 if __name__ == '__main__':
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(('localhost', 8081))
+        sock.bind(('localhost', 8080))
         sock.listen()
 
         file_list = []

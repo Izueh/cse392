@@ -9,16 +9,42 @@ from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 from header_structs import difuse_request, difuse_response
 
 class Memory(LoggingMixIn, Operations):
+
     """Example memory filesystem. Supports only one level of files."""
-    def __init__(self, server):
+    def __init__(self):
         print("init")
-        self.bootstrap = server
         self.files = {}
         self.data = defaultdict(str)
         self.fd = 0
         now = time()
         self.files['/'] = dict(st_mode=(S_IFDIR | 0o755), st_ctime=now,
                 st_mtime=now, st_atime=now, st_nlink=2)
+
+    """HELPER FUNCTION"""
+    def requestboot(self, op, data):
+        serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        serversocket.connect((ip, port))
+        data = dumps(data)
+        res = {}
+        res['op'] = op
+        res['length'] = len(data)
+        request = difuse_request.build(res)
+        req_data = request + data.encode('utf-8')
+        serversocket.sendall(req_data)
+
+        res = serversocket.recv(difuse_response.sizeof())
+        res_header = difuse_response.parse(res)
+        if res_header.status == 1:
+            raise FuseOSError(ENOENT)
+        st = serversocket.recv(res_header.length)
+        st = st.decode('utf-8')
+        st = loads(st)
+        return st
+
+
+
+    def test(self):
+        print('ehehe')
 
     def chmod(self, path, mode):
         print("chmod")
@@ -33,6 +59,7 @@ class Memory(LoggingMixIn, Operations):
 
     def create(self, path, mode):
         print("create")
+
         self.files[path] = dict(st_mode=(S_IFREG | mode), st_nlink=1,
             st_size=0, st_ctime=time(), st_mtime=time(), st_atime=time())
         self.fd += 1
@@ -40,35 +67,12 @@ class Memory(LoggingMixIn, Operations):
 
     def getattr(self, path, fh=None):
         print('getattr', path)
-        self.bootstrap.connect(('127.0.0.1', 8081))
-        print(selfbootstrap)
-        data = dumps({'file': path})
-        res = {}
-        res['op'] = 0x02
-        res['length'] = len(data)
-        request = difuse_request.build(res)
-        req_data = request + data.encode('utf-8')
-        self.bootstrap.sendall(req_data)
-
-        res = self.bootstrap.recv(4)
-        res_header = difuse_response.parse(res)
-        print(res_header)
-        if res_header.status == 1:
-            print('close')
-            self.bootstrap.close()
-            raise FuseOSError(ENOENT)
-        st = self.bootstrap.recv(res_header.length)
-        st = st.decode('utf-8')
-        print(st)
-        st = loads(st)
-        if path not in self.files:
-            print('close')
-            self.bootstrap.close()
-            raise FuseOSError(ENOENT)
-        st = self.files[path]
-        print('close')
-        self.bootstrap.close()
-        return st
+        data = {'file': path}
+        attr = self.requestboot(0x2, data) 
+        #if path not in self.files:
+        #    raise FuseOSError(ENOENT)
+        #st = self.files[path]
+        return attr
 
     def getxattr(self, path, name, position=0):
         print("getxattr")
@@ -99,22 +103,9 @@ class Memory(LoggingMixIn, Operations):
         return self.data[path][offset:offset + size]
 
     def readdir(self, path, fh):
-        print('getattr')
-        res = {}
-        res['op'] = 0x02
-        res['length'] = 0
-        request = difuse_request.build(res)
-        req_data = request + str.encode(data)
-        self.bootstrap.sendall(req_data)
-
-        res = self.bootstrap.recv(difuse_response.sizeof())
-        res_header = difuse_response.parse(res)
-        if res_header.status == 1:
-            raise FuseOSError(ENOENT)
-        st = self.bootstrap.recv(res_header.length)
-        st = str.decode(st)
-        st = loads(st)
-        return ['.', '..'] + [x[1:] for x in self.files if x != '/']
+        print('readdir')
+        st = self.requestboot(0x1, {})
+        return ['.', '..'] + st
 
     def readlink(self, path):
         print("readlink")
@@ -177,6 +168,6 @@ class Memory(LoggingMixIn, Operations):
 
 
 if __name__ == "__main__":
-    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # bind the socket to a public host, and a well-known port
-    fuse = FUSE(Memory(serversocket), argv[1], foreground=True)
+    ip = '127.0.0.1'
+    port = 8080
+    fuse = FUSE(Memory(), argv[1], foreground=True)
