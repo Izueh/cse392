@@ -36,12 +36,7 @@ if __name__ == '__main__':
         file_dir = 'difuse.local'
 
         while 0xCAFE:
-            s, _, _ = select.select([sock], [], [])
-            if sock in s:
-                try:
-                    with sock.accept() as fd:
-                        header = difuse_request.parse(fd.recv(size))
-                        payload = loads(fd.recv(header.size))
-                        handle[header.op](fd, payload)
-                except Exception:
-                    continue
+            fd, addr = sock.accept()
+            header = difuse_request.parse(fd.recv(size))
+            payload = loads(fd.recv(header.size))
+            handle[header.op](fd, payload)
