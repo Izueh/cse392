@@ -29,11 +29,19 @@ def lookup(fd, addr, req):
         fd.sendall(difuse_response.build(res))
     else:
         res = {}
-        data = dumps({'ip': file_ip[req['file']]}).encode('utf-8')
+        data = dumps({'ip': file_ip[req['file']], 'attr': file_att[req['file']]}).encode('utf-8')
         res['status'] = 0
         res['length'] = len(data)
         fd.sendall(difuse_response.build(res)+data)
 
+def create(fd, addr, req):
+    file_ip[req['file']] = addr
+    file_att[req['file']] = req['attributes']
+    file_list.append(req['file'])
+    res = {}
+    res['status'] = 0
+    res['length'] = 0
+    fd.sendall(difuse_response.build(res))
 
 def join(fd, addr, req):
     for f in req:
@@ -57,12 +65,12 @@ def leave(fd, addr, req):
 if __name__ == '__main__':
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(('localhost', 8080))
+        sock.bind(('localhost', 8081))
         sock.listen()
 
         file_list = []
         file_ip = {}
-
+        file_att = {}
         size = difuse_request.sizeof()
         print(size)
 
@@ -70,7 +78,8 @@ if __name__ == '__main__':
                 0x01: list_dir,
                 0x02: lookup,
                 0x03: join,
-                0x04: leave
+                0x04: leave,
+                0x05: create
             }
 
         while 0xDEAD:

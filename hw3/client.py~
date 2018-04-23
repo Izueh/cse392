@@ -4,6 +4,7 @@ from stat import S_IFDIR, S_IFLNK, S_IFREG
 from sys import argv, exit
 from time import time
 import socket
+import os
 from json import loads, dumps
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 from header_structs import difuse_request, difuse_response
@@ -36,9 +37,11 @@ class Memory(LoggingMixIn, Operations):
         res_header = difuse_response.parse(res)
         if res_header.status == 1:
             raise FuseOSError(ENOENT)
-        st = serversocket.recv(res_header.length)
-        st = st.decode('utf-8')
-        st = loads(st)
+        st = {}
+        if(res_header.length):
+            st = serversocket.recv(res_header.length)
+            st = st.decode('utf-8')
+            st = loads(st)
         return st
 
 
@@ -59,11 +62,13 @@ class Memory(LoggingMixIn, Operations):
 
     def create(self, path, mode):
         print("create")
-
-        self.files[path] = dict(st_mode=(S_IFREG | mode), st_nlink=1,
+        attr =  dict(st_mode=(S_IFREG | mode), st_nlink=1,
             st_size=0, st_ctime=time(), st_mtime=time(), st_atime=time())
-        self.fd += 1
-        return self.fd
+        print(attr)
+        data = {'file': path,
+                'attributes': attr}
+        self.requestboot(0x5, data)
+        return os.open((argv[1]+ '/'+path), os.O_WRONLY | os.O_CREAT, mode)
 
     def getattr(self, path, fh=None):
         print('getattr', path)
@@ -169,5 +174,5 @@ class Memory(LoggingMixIn, Operations):
 
 if __name__ == "__main__":
     ip = '127.0.0.1'
-    port = 8080
+    port = 8081
     fuse = FUSE(Memory(), argv[1], foreground=True)
