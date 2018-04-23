@@ -41,7 +41,7 @@ class Memory(LoggingMixIn, Operations):
     def getattr(self, path, fh=None):
         print('getattr', path)
         self.bootstrap.connect(('127.0.0.1', 8081))
-        print(self.bootstrap)
+        print(selfbootstrap)
         data = dumps({'file': path})
         res = {}
         res['op'] = 0x02
