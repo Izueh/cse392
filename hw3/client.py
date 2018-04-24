@@ -44,11 +44,6 @@ class Memory(LoggingMixIn, Operations):
             st = loads(st)
         return st
 
-
-
-    def test(self):
-        print('ehehe')
-
     def chmod(self, path, mode):
         print("chmod")
         self.files[path]['st_mode'] &= 0o770000
@@ -62,22 +57,23 @@ class Memory(LoggingMixIn, Operations):
 
     def create(self, path, mode):
         print("create")
-        attr =  dict(st_mode=(S_IFREG | mode), st_nlink=1,
-            st_size=0, st_ctime=time(), st_mtime=time(), st_atime=time())
-        print(attr)
-        data = {'file': path,
+        attr = dict(st_mode=(S_IFREG | mode), st_nlink=1,
+             st_size=0, st_ctime=time(), st_mtime=time(), st_atime=time())
+        data = {'file': path[1:],
                 'attributes': attr}
         self.requestboot(0x5, data)
-        return os.open((argv[1]+ '/'+path), os.O_WRONLY | os.O_CREAT, mode)
+        return os.open(saving_path + path, os.O_WRONLY | os.O_CREAT, mode)
 
     def getattr(self, path, fh=None):
         print('getattr', path)
+        if path != '/':
+            path = path[1:]
         data = {'file': path}
-        attr = self.requestboot(0x2, data) 
+        attr = self.requestboot(0x2, data)
         #if path not in self.files:
         #    raise FuseOSError(ENOENT)
         #st = self.files[path]
-        return attr
+        return attr['attr']
 
     def getxattr(self, path, name, position=0):
         print("getxattr")
@@ -162,8 +158,10 @@ class Memory(LoggingMixIn, Operations):
         print("utimens")
         now = time()
         atime, mtime = times if times else (now, now)
-        self.files[path]['st_atime'] = atime
-        self.files[path]['st_mtime'] = mtime
+        data = {'atime': atime, 'mtime': mtime}
+        print(data)
+        #self.requestboot(0x07, data)
+
 
     def write(self, path, data, offset, fh):
         print("write")
@@ -175,4 +173,5 @@ class Memory(LoggingMixIn, Operations):
 if __name__ == "__main__":
     ip = '127.0.0.1'
     port = 8081
+    saving_path = '/home/jappatel/mount/save'
     fuse = FUSE(Memory(), argv[1], foreground=True)

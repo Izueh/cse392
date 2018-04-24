@@ -16,7 +16,8 @@ def lookup(fd, addr, req):
     print(filename)
     if filename == '/' or filename == None:
         res = {}
-        data ={'st_mode': 16877, 'st_ctime': 1524460373.0432584, 'st_mtime': 1524460373.0432584, 'st_atime': 1524460373.0432584, 'st_nlink': 2 }
+        data =  { 'ip': addr,
+                  'attr': {'st_mode': 16877, 'st_ctime': 1524460373.0432584, 'st_mtime': 1524460373.0432584, 'st_atime': 1524460373.0432584, 'st_nlink': 2 }}
         data = dumps(data).encode('utf-8')
         res['status'] = 0
         res['length'] = len(data)
