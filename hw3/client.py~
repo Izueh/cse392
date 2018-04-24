@@ -189,7 +189,10 @@ class Memory(LoggingMixIn, Operations):
 
     def unlink(self, path):
         print("unlink")
-        self.files.pop(path)
+        ip = self.requestip(path[1:])
+        print(ip)
+        data = {'file': path[1:]}
+        response = self.requestserver(0x14, data, ip[0], ip[1])
 
     def utimens(self, path, times=None):
         print("utimens")
@@ -211,5 +214,5 @@ class Memory(LoggingMixIn, Operations):
 if __name__ == "__main__":
     ip = '127.0.0.1'
     port = 8081
-    saving_path = '/home/jappatel/mount/save/'
+    saving_path = '/home/jappatel/mount/save'
     fuse = FUSE(Memory(), argv[1], foreground=True)

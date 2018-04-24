@@ -54,14 +54,23 @@ def stat(fd, req):
 
 
 def rm(fd, req):
+    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    serversocket.connect((argv[1], int(argv[2])))
+
+    data = dumps({'file': req['file']}).encode('utf-8')
+    res = {}
+    res['op'] = 0x06
+    res['length'] = len(data)
+    request = difuse_request.build(res)
+    serversocket.sendall(request + data)
+
     os.unlink('/'.join((file_dir, req['file'])))
+
     res = {}
     res['status'] = 0
     res['length'] = 0
     h = difuse_response.build(res)
-    # TODO send update
     fd.sendall(h)
-
 
 if __name__ == '__main__':
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -74,7 +83,8 @@ if __name__ == '__main__':
             0x10: stat,
             0x11: read,
             0x12: write,
-            0x13: truncate
+            0x13: truncate,
+            0x14: rm
         }
 
         file_dir = '/home/jappatel/mount/save'

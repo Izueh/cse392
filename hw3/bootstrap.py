@@ -42,6 +42,14 @@ def create(fd, addr, req):
     res['length'] = 0
     fd.sendall(difuse_response.build(res))
 
+def remove(fd, addr, req):
+    del file_ip[req['file']]
+    file_list.remove(req['file'])
+    res = {}
+    res['status'] = 0
+    res['length'] = 0
+    fd.sendall(difuse_response.build(res))
+
 def join(fd, addr, req):
     print(req)
     for f in req:
@@ -60,7 +68,6 @@ def leave(fd, addr, req):
     res['length'] = 0
     fd.sendall(difuse_response.build(res))
 
-
 if __name__ == '__main__':
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -77,7 +84,8 @@ if __name__ == '__main__':
                 0x02: lookup,
                 0x03: join,
                 0x04: leave,
-                0x05: create
+                0x05: create,
+                0x06: remove
             }
 
         while 0xDEAD:
