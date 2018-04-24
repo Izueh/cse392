@@ -101,6 +101,9 @@ class Memory(LoggingMixIn, Operations):
 
     def read(self, path, size, offset, fh):
         print("read")
+        data = {'file': path}
+        attr = self.requestboot(0x2, data)
+        ip = attr['ip']
         return self.data[path][offset:offset + size]
 
     def readdir(self, path, fh):

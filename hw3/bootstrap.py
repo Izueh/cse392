@@ -45,8 +45,10 @@ def create(fd, addr, req):
     fd.sendall(difuse_response.build(res))
 
 def join(fd, addr, req):
+    print(req)
     for f in req:
         file_ip[f] = addr
+        file_att[f] = req[f]
         file_list.append(f)
     res = {}
     res['status'] = 0
