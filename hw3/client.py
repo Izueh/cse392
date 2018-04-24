@@ -106,9 +106,13 @@ class Memory(LoggingMixIn, Operations):
 
     def getxattr(self, path, name, position=0):
         print("getxattr")
-        attrs = self.files[path].get('attrs', {})
+        if path != '/':
+            path = path[1:]
+        data = {'file': path}
+        ip = self.requestip(path)
+        attribute = self.requestserver(0x10, data, ip[0], ip[1])
         try:
-            return attrs[name]
+            return attribute[name]
         except KeyError:
             return ''       # Should return ENOATTR
 
@@ -180,8 +184,10 @@ class Memory(LoggingMixIn, Operations):
 
     def truncate(self, path, length, fh=None):
         print("truncate")
-        self.data[path] = self.data[path][:length]
-        self.files[path]['st_size'] = length
+        ip = self.requestip(path[1:])
+        print(ip)
+        data = {'file': path, 'size': length}
+        response = self.requestread(0x13, data, ip[0], ip[1])
 
     def unlink(self, path):
         print("unlink")
@@ -198,10 +204,12 @@ class Memory(LoggingMixIn, Operations):
 
     def write(self, path, data, offset, fh):
         print("write")
-        self.data[path] = self.data[path][:offset] + data
-        self.files[path]['st_size'] = len(self.data[path])
+        ip = self.requestip(path[1:])
+        print(ip)
+        data = data.decode('utf-8')
+        payload = {'file': path, 'offset': offset, 'data': data}
+        response = self.requestserver(0x12, payload, ip[0], ip[1])
         return len(data)
-
 
 if __name__ == "__main__":
     ip = '127.0.0.1'

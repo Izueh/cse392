@@ -23,9 +23,17 @@ def read(fd, req):
 
 
 def write(fd, req):
-    with open('/'.join((file_dir, req['file'])), 'rb') as f:
+    with open('/'.join((file_dir, req['file'])), 'w+') as f:
         f.seek(req['offset'])
         f.write(req['data'])
+        res = {}
+        res['status'] = 0
+        res['length'] = 0
+        fd.sendall(difuse_response.build(res))
+
+def truncate(fd, req):
+    with open('/'.join((file_dir, req['file'])), 'w+') as f:
+        f.truncate(req['size'])
         res = {}
         res['status'] = 0
         res['length'] = 0
@@ -65,7 +73,8 @@ if __name__ == '__main__':
         handle = {
             0x10: stat,
             0x11: read,
-            0x12: write
+            0x12: write,
+            0x13: truncate
         }
 
         file_dir = '/home/jappatel/mount/save'
