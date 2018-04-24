@@ -47,7 +47,6 @@ class Memory(LoggingMixIn, Operations):
             st = loads(st)
         return st
 
-
     def requestread(self, op, data, ip, port):
         serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         serversocket.connect((ip, port))
@@ -68,6 +67,10 @@ class Memory(LoggingMixIn, Operations):
             st = serversocket.recv(res_header.length)
         return st
 
+    def requestip(self, path):
+        data = {'file': path}
+        attr = self.requestboot(0x2, data)
+        return attr['ip']
 
     def chmod(self, path, mode):
         print("chmod")
@@ -94,11 +97,12 @@ class Memory(LoggingMixIn, Operations):
         if path != '/':
             path = path[1:]
         data = {'file': path}
-        attr = self.requestboot(0x2, data)
+        ip = self.requestip(path)
+        attribute = self.requestserver(0x10, data, ip[0], ip[1])
         #if path not in self.files:
         #    raise FuseOSError(ENOENT)
         #st = self.files[path]
-        return attr['attr']
+        return attribute
 
     def getxattr(self, path, name, position=0):
         print("getxattr")
@@ -126,9 +130,7 @@ class Memory(LoggingMixIn, Operations):
 
     def read(self, path, size, offset, fh):
         print("read")
-        data = {'file': path[1:]}
-        attr = self.requestboot(0x2, data)
-        ip = attr['ip']
+        ip = self.requestip(path[1:])
         print(ip)
         data = {'file': path, 'offset': offset, 'size': size}
         response = self.requestread(0x11, data, ip[0], ip[1])

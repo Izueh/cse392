@@ -16,8 +16,7 @@ def lookup(fd, addr, req):
     print(filename)
     if filename == '/' or filename == None:
         res = {}
-        data =  { 'ip': addr,
-                  'attr': {'st_mode': 16877, 'st_ctime': 1524460373.0432584, 'st_mtime': 1524460373.0432584, 'st_atime': 1524460373.0432584, 'st_nlink': 2 }}
+        data =  { 'ip': [addr[0],8080]}
         data = dumps(data).encode('utf-8')
         res['status'] = 0
         res['length'] = len(data)
@@ -30,14 +29,13 @@ def lookup(fd, addr, req):
         fd.sendall(difuse_response.build(res))
     else:
         res = {}
-        data = dumps({'ip': file_ip[req['file']], 'attr': file_att[req['file']]}).encode('utf-8')
+        data = dumps({'ip': file_ip[req['file']]}).encode('utf-8')
         res['status'] = 0
         res['length'] = len(data)
         fd.sendall(difuse_response.build(res)+data)
 
 def create(fd, addr, req):
     file_ip[req['file']] = addr
-    file_att[req['file']] = req['attributes']
     file_list.append(req['file'])
     res = {}
     res['status'] = 0
@@ -48,13 +46,11 @@ def join(fd, addr, req):
     print(req)
     for f in req:
         file_ip[f] = [addr[0], 8080]
-        file_att[f] = req[f]
         file_list.append(f)
     res = {}
     res['status'] = 0
     res['length'] = 0
     fd.sendall(difuse_response.build(res))
-
 
 def leave(fd, addr, req):
     global file_ip
@@ -73,7 +69,6 @@ if __name__ == '__main__':
 
         file_list = []
         file_ip = {}
-        file_att = {}
         size = difuse_request.sizeof()
         print(size)
 
