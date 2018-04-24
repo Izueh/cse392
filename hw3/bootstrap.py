@@ -35,7 +35,7 @@ def lookup(fd, addr, req):
         fd.sendall(difuse_response.build(res)+data)
 
 def create(fd, addr, req):
-    file_ip[req['file']] = addr
+    file_ip[req['file']] = [addr[0], 8080]
     file_list.append(req['file'])
     res = {}
     res['status'] = 0

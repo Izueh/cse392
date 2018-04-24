@@ -85,10 +85,7 @@ class Memory(LoggingMixIn, Operations):
 
     def create(self, path, mode):
         print("create")
-        attr = dict(st_mode=(S_IFREG | mode), st_nlink=1,
-             st_size=0, st_ctime=time(), st_mtime=time(), st_atime=time())
-        data = {'file': path[1:],
-                'attributes': attr}
+        data = {'file': path[1:]}
         self.requestboot(0x5, data)
         return os.open(saving_path + path, os.O_WRONLY | os.O_CREAT, mode)
 
@@ -98,6 +95,7 @@ class Memory(LoggingMixIn, Operations):
             path = path[1:]
         data = {'file': path}
         ip = self.requestip(path)
+        print(ip, path)
         attribute = self.requestserver(0x10, data, ip[0], ip[1])
         #if path not in self.files:
         #    raise FuseOSError(ENOENT)
@@ -200,7 +198,6 @@ class Memory(LoggingMixIn, Operations):
         data = {'atime': atime, 'mtime': mtime}
         print(data)
         #self.requestboot(0x07, data)
-
 
     def write(self, path, data, offset, fh):
         print("write")
