@@ -23,6 +23,9 @@ class Memory(LoggingMixIn, Operations):
 
     """HELPER FUNCTION"""
     def requestboot(self, op, data):
+        return self.requestserver(op, data, ip, port)
+
+    def requestserver(self, op, data, ip, port):
         serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         serversocket.connect((ip, port))
         data = dumps(data)
@@ -43,6 +46,28 @@ class Memory(LoggingMixIn, Operations):
             st = st.decode('utf-8')
             st = loads(st)
         return st
+
+
+    def requestread(self, op, data, ip, port):
+        serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        serversocket.connect((ip, port))
+        data = dumps(data)
+        res = {}
+        res['op'] = op
+        res['length'] = len(data)
+        request = difuse_request.build(res)
+        req_data = request + data.encode('utf-8')
+        serversocket.sendall(req_data)
+
+        res = serversocket.recv(difuse_response.sizeof())
+        res_header = difuse_response.parse(res)
+        if res_header.status == 1:
+            raise FuseOSError(ENOENT)
+        st = {}
+        if(res_header.length):
+            st = serversocket.recv(res_header.length)
+        return st
+
 
     def chmod(self, path, mode):
         print("chmod")
@@ -101,10 +126,13 @@ class Memory(LoggingMixIn, Operations):
 
     def read(self, path, size, offset, fh):
         print("read")
-        data = {'file': path}
+        data = {'file': path[1:]}
         attr = self.requestboot(0x2, data)
         ip = attr['ip']
-        return self.data[path][offset:offset + size]
+        print(ip)
+        data = {'file': path, 'offset': offset, 'size': size}
+        response = self.requestread(0x11, data, ip[0], ip[1])
+        return response
 
     def readdir(self, path, fh):
         print('readdir')

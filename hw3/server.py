@@ -28,7 +28,7 @@ def read(fd, req):
         res = {}
         res['status'] = 0
         res['length'] = len(data)
-        fd.send_all(difuse_response.build(res) + data)
+        fd.sendall(difuse_response.build(res) + data)
 
 
 def write(fd, req):
@@ -38,7 +38,7 @@ def write(fd, req):
         res = {}
         res['status'] = 0
         res['length'] = 0
-        fd.send_all(difuse_response.build(res))
+        fd.sendall(difuse_response.build(res))
 
 
 def stat(fd, req):
@@ -80,5 +80,5 @@ if __name__ == '__main__':
         while 0xCAFE:
             fd, addr = sock.accept()
             header = difuse_request.parse(fd.recv(size))
-            payload = loads(fd.recv(header.size))
+            payload = loads(fd.recv(header.length))
             handle[header.op](fd, payload)
