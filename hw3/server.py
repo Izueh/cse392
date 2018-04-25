@@ -5,6 +5,17 @@ from header_structs import difuse_request, difuse_response
 import os
 from sys import argv
 
+def reqboot(op, data):
+    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    serversocket.connect((argv[1], int(argv[2])))
+
+    data = dumps(data).encode('utf-8')
+    res = {}
+    res['op'] = op
+    res['length'] = len(data)
+    request = difuse_request.build(res)
+    serversocket.sendall(request + data)
+
 def join():
     s = socket.socket()
     s.connect((argv[1], int(argv[2])))
@@ -39,6 +50,15 @@ def truncate(fd, req):
         res['length'] = 0
         fd.sendall(difuse_response.build(res))
 
+def rename(fd, req):
+    reqboot(0x07, req)
+    os.rename('/'.join((file_dir, req['file'])), '/'.join((file_dir, req['newname'])))
+
+    res = {}
+    res['status'] = 0
+    res['length'] = 0
+    h = difuse_response.build(res)
+    fd.sendall(h)
 
 def stat(fd, req):
     info = os.stat('/'.join((file_dir, req['file'])))
@@ -54,16 +74,8 @@ def stat(fd, req):
 
 
 def rm(fd, req):
-    serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    serversocket.connect((argv[1], int(argv[2])))
-
-    data = dumps({'file': req['file']}).encode('utf-8')
-    res = {}
-    res['op'] = 0x06
-    res['length'] = len(data)
-    request = difuse_request.build(res)
-    serversocket.sendall(request + data)
-
+    data = {'file': req['file']}
+    reqboot(0x06, data)
     os.unlink('/'.join((file_dir, req['file'])))
 
     res = {}
@@ -84,7 +96,8 @@ if __name__ == '__main__':
             0x11: read,
             0x12: write,
             0x13: truncate,
-            0x14: rm
+            0x14: rm,
+            0x15: rename
         }
 
         file_dir = '/home/jappatel/mount/save'

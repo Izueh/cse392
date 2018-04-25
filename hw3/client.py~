@@ -157,7 +157,11 @@ class Memory(LoggingMixIn, Operations):
 
     def rename(self, old, new):
         print("rename")
-        self.files[new] = self.files.pop(old)
+        print(old, new)
+        ip = self.requestip(old[1:])
+        print(ip)
+        data = {'file': old[1:], 'newname': new[1:]}
+        self.requestserver(0x15, data, ip[0], ip[1])
 
     def rmdir(self, path):
         print("rmdir")

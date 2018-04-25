@@ -13,7 +13,6 @@ def list_dir(fd, addr, req):
 
 def lookup(fd, addr, req):
     filename = req['file']
-    print(filename)
     if filename == '/' or filename == None:
         res = {}
         data =  { 'ip': [addr[0],8080]}
@@ -25,7 +24,6 @@ def lookup(fd, addr, req):
         res = {}
         res['status'] = 0x01
         res['length'] = 0
-        print(fd)
         fd.sendall(difuse_response.build(res))
     else:
         res = {}
@@ -50,8 +48,17 @@ def remove(fd, addr, req):
     res['length'] = 0
     fd.sendall(difuse_response.build(res))
 
+def rename(fd, addr, req):
+    file_ip[req['newname']] = file_ip[req['file']]
+    file_list.append(req['newname'])
+    del file_ip[req['file']]
+    file_list.remove(req['file'])
+    res = {}
+    res['status'] = 0
+    res['length'] = 0
+    fd.sendall(difuse_response.build(res))
+
 def join(fd, addr, req):
-    print(req)
     for f in req:
         file_ip[f] = [addr[0], 8080]
         file_list.append(f)
@@ -77,7 +84,6 @@ if __name__ == '__main__':
         file_list = []
         file_ip = {}
         size = difuse_request.sizeof()
-        print(size)
 
         handle = {
                 0x01: list_dir,
@@ -85,13 +91,13 @@ if __name__ == '__main__':
                 0x03: join,
                 0x04: leave,
                 0x05: create,
-                0x06: remove
+                0x06: remove,
+                0x07: rename
             }
 
         while 0xDEAD:
             fd, addr = sock.accept()
             header = difuse_request.parse(fd.recv(size))
-            print(header)
             payload = loads(fd.recv(header.length)) if header.length else None
             handle[header.op](fd, addr, payload)
             fd.close()
