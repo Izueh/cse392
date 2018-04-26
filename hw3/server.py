@@ -1,9 +1,9 @@
 import socket
-import select
 from json import dumps, loads
 from header_structs import difuse_request, difuse_response
 import os
 from sys import argv
+
 
 def reqboot(op, data):
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -16,12 +16,14 @@ def reqboot(op, data):
     request = difuse_request.build(res)
     serversocket.sendall(request + data)
 
+
 def join():
     s = socket.socket()
     s.connect((argv[1], int(argv[2])))
     data = dumps(os.listdir(file_dir)).encode('utf-8')
     h = difuse_request.build({'op': 0x3, 'length': len(data)})
     s.sendall(h+data)
+
 
 def read(fd, req):
     with open('/'.join((file_dir, req['file'])), 'rb') as f:
@@ -42,6 +44,7 @@ def write(fd, req):
         res['length'] = 0
         fd.sendall(difuse_response.build(res))
 
+
 def truncate(fd, req):
     with open('/'.join((file_dir, req['file'])), 'w+') as f:
         f.truncate(req['size'])
@@ -50,9 +53,11 @@ def truncate(fd, req):
         res['length'] = 0
         fd.sendall(difuse_response.build(res))
 
+
 def rename(fd, req):
     reqboot(0x07, req)
-    os.rename('/'.join((file_dir, req['file'])), '/'.join((file_dir, req['newname'])))
+    os.rename('/'.join((file_dir, req['file'])),
+              '/'.join((file_dir, req['newname'])))
 
     res = {}
     res['status'] = 0
@@ -60,11 +65,12 @@ def rename(fd, req):
     h = difuse_response.build(res)
     fd.sendall(h)
 
+
 def stat(fd, req):
     info = os.stat('/'.join((file_dir, req['file'])))
     stat = dict(st_mode=info.st_mode, st_nlink=info.st_nlink,
-                           st_size=info.st_size, st_ctime=info.st_ctime,
-                           st_mtime=info.st_mtime, st_atime=info.st_atime)
+                st_size=info.st_size, st_ctime=info.st_ctime,
+                st_mtime=info.st_mtime, st_atime=info.st_atime)
     data = dumps(stat).encode('utf-8')
     res = {}
     res['status'] = 0
@@ -83,6 +89,7 @@ def rm(fd, req):
     res['length'] = 0
     h = difuse_response.build(res)
     fd.sendall(h)
+
 
 if __name__ == '__main__':
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:

@@ -1,7 +1,7 @@
 from collections import defaultdict
 from errno import ENOENT
 from stat import S_IFDIR, S_IFLNK, S_IFREG
-from sys import argv, exit
+from sys import argv
 from time import time
 import socket
 import os
@@ -9,9 +9,11 @@ from json import loads, dumps
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 from header_structs import difuse_request, difuse_response
 
+
 class Memory(LoggingMixIn, Operations):
 
     """Example memory filesystem. Supports only one level of files."""
+
     def __init__(self):
         print("init")
         self.files = {}
@@ -19,9 +21,10 @@ class Memory(LoggingMixIn, Operations):
         self.fd = 0
         now = time()
         self.files['/'] = dict(st_mode=(S_IFDIR | 0o755), st_ctime=now,
-                st_mtime=now, st_atime=now, st_nlink=2)
+                               st_mtime=now, st_atime=now, st_nlink=2)
 
     """HELPER FUNCTION"""
+
     def requestboot(self, op, data):
         return self.requestserver(op, data, ip, port)
 
@@ -93,13 +96,17 @@ class Memory(LoggingMixIn, Operations):
         print('getattr', path)
         if path != '/':
             path = path[1:]
+        else:
+            return dict(st_mode=S_IFDIR | 0o755, st_nlink=0,
+                        st_size=0, st_ctime=time(),
+                        st_mtime=time(), st_atime=time())
         data = {'file': path}
         ip = self.requestip(path)
         print(ip, path)
         attribute = self.requestserver(0x10, data, ip[0], ip[1])
-        #if path not in self.files:
+        # if path not in self.files:
         #    raise FuseOSError(ENOENT)
-        #st = self.files[path]
+        # st = self.files[path]
         return attribute
 
     def getxattr(self, path, name, position=0):
@@ -122,7 +129,7 @@ class Memory(LoggingMixIn, Operations):
     def mkdir(self, path, mode):
         print("mkdir")
         self.files[path] = dict(st_mode=(S_IFDIR | mode), st_nlink=2,
-                st_size=0, st_ctime=time(), st_mtime=time(), st_atime=time())
+                                st_size=0, st_ctime=time(), st_mtime=time(), st_atime=time())
         self.files['/']['st_nlink'] += 1
 
     def open(self, path, flags):
@@ -180,7 +187,7 @@ class Memory(LoggingMixIn, Operations):
     def symlink(self, target, source):
         print("syslink")
         self.files[target] = dict(st_mode=(S_IFLNK | 0o777), st_nlink=1,
-            st_size=len(source))
+                                  st_size=len(source))
         self.data[target] = source
 
     def truncate(self, path, length, fh=None):
@@ -203,7 +210,7 @@ class Memory(LoggingMixIn, Operations):
         atime, mtime = times if times else (now, now)
         data = {'atime': atime, 'mtime': mtime}
         print(data)
-        #self.requestboot(0x07, data)
+        # self.requestboot(0x07, data)
 
     def write(self, path, data, offset, fh):
         print("write")
@@ -213,6 +220,7 @@ class Memory(LoggingMixIn, Operations):
         payload = {'file': path, 'offset': offset, 'data': data}
         response = self.requestserver(0x12, payload, ip[0], ip[1])
         return len(data)
+
 
 if __name__ == "__main__":
     ip = '127.0.0.1'
