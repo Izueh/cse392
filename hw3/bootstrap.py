@@ -13,9 +13,9 @@ def list_dir(fd, addr, req):
 
 def lookup(fd, addr, req):
     filename = req['file']
-    if filename == '/' or filename == None:
+    if filename == '/' or filename is None:
         res = {}
-        data =  { 'ip': [addr[0],8080]}
+        data = {'ip': [addr[0], 8080]}
         data = dumps(data).encode('utf-8')
         res['status'] = 0
         res['length'] = len(data)
@@ -32,6 +32,7 @@ def lookup(fd, addr, req):
         res['length'] = len(data)
         fd.sendall(difuse_response.build(res)+data)
 
+
 def create(fd, addr, req):
     file_ip[req['file']] = [addr[0], 8080]
     file_list.append(req['file'])
@@ -40,6 +41,7 @@ def create(fd, addr, req):
     res['length'] = 0
     fd.sendall(difuse_response.build(res))
 
+
 def remove(fd, addr, req):
     del file_ip[req['file']]
     file_list.remove(req['file'])
@@ -47,6 +49,7 @@ def remove(fd, addr, req):
     res['status'] = 0
     res['length'] = 0
     fd.sendall(difuse_response.build(res))
+
 
 def rename(fd, addr, req):
     file_ip[req['newname']] = file_ip[req['file']]
@@ -58,6 +61,7 @@ def rename(fd, addr, req):
     res['length'] = 0
     fd.sendall(difuse_response.build(res))
 
+
 def join(fd, addr, req):
     for f in req:
         file_ip[f] = [addr[0], 8080]
@@ -67,6 +71,7 @@ def join(fd, addr, req):
     res['length'] = 0
     fd.sendall(difuse_response.build(res))
 
+
 def leave(fd, addr, req):
     global file_ip
     file_ip = {k: v for k, v in file_ip.items() if v == addr}
@@ -74,6 +79,7 @@ def leave(fd, addr, req):
     res['status'] = 0
     res['length'] = 0
     fd.sendall(difuse_response.build(res))
+
 
 if __name__ == '__main__':
 
@@ -86,14 +92,14 @@ if __name__ == '__main__':
         size = difuse_request.sizeof()
 
         handle = {
-                0x01: list_dir,
-                0x02: lookup,
-                0x03: join,
-                0x04: leave,
-                0x05: create,
-                0x06: remove,
-                0x07: rename
-            }
+            0x01: list_dir,
+            0x02: lookup,
+            0x03: join,
+            0x04: leave,
+            0x05: create,
+            0x06: remove,
+            0x07: rename
+        }
 
         while 0xDEAD:
             fd, addr = sock.accept()
