@@ -3,7 +3,12 @@ from json import dumps, loads
 from header_structs import difuse_request, difuse_response
 import os
 from sys import argv
+from threading import Thread
+from hashlib import sha1
+from base64 import b64encode, b64decode
 
+
+# TODO: add file migration functionality
 
 def reqboot(op, data):
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -91,6 +96,62 @@ def rm(fd, req):
     fd.sendall(h)
 
 
+def recv_help(ip, my_hash):
+    s = socket.create_connection(ip, 8080)
+    listenfd = socket.socket()
+    listenfd.bind(('0.0.0.0', 0))
+    listenfd.listen()
+    port = socket.getsockname(listenfd)
+    data = dumps({'port': port[1], 'hash': my_hash})
+    req = {}
+    req['op'] = 0x16
+    req['length'] = len(data)
+    req = difuse_request.build(req)
+    s.sendall(req+data)
+    s.close()
+    s = listenfd.accept()
+    while(1):
+        h = s.recv(difuse_request.sizeof())
+        if not h:
+            break
+        h = difuse_request.parse(h)
+        data = s.recv(h.length)
+        data = loads(data)
+        data['data'] = b64decode(data['data'])
+        f = open(data['fname'], 'wb')
+        f.write(data['data'])
+        f.close()
+    listenfd.close()
+
+
+def recv_files(ip, hash):
+    t = Thread(target=recv_help, args=[ip, hash])
+    t.start()
+
+
+def send_help(ip, port, other_hash):
+    files = os.listdir(file_dir)
+    with socket.create_connection(ip, port) as s:
+        for fname in files:
+            h = sha1(fname)
+            if h < other_hash:
+                f = open(fname, 'rb')
+                data = b64encode(f.read())
+                f.close()
+                os.unlink(fname)
+                data = dumps({'fname': fname, 'data': data})
+                req = {'op': 0, 'length': len(data)}
+                req = difuse_request.build(req)
+                s.sendall(req+data)
+
+
+def send_files(fd, req, addr):
+    t = Thread(target=send_help, args=[addr[0], req['port'], req['hash']])
+    t.start()
+    # start thread
+    # thread will send files through this port
+
+
 if __name__ == '__main__':
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(('0.0.0.0', 8080))
@@ -104,7 +165,8 @@ if __name__ == '__main__':
             0x12: write,
             0x13: truncate,
             0x14: rm,
-            0x15: rename
+            0x15: rename,
+            0x16: send_files
         }
 
         file_dir = '/home/jappatel/mount/save'
