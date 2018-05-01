@@ -1,7 +1,12 @@
 import socket
 from header_structs import difuse_request, difuse_response
 from json import loads, dumps
+from base64 import b64encode, b64decode
+from hashlib import sha1
 
+
+# TODO: add salted hash
+# TODO: add function to remove node if connection terminated
 
 def list_dir(fd, addr, req):
     data = dumps(file_list).encode('utf-8')
@@ -13,24 +18,18 @@ def list_dir(fd, addr, req):
 
 def lookup(fd, addr, req):
     filename = req['file']
-    if filename == '/' or filename is None:
-        res = {}
-        data = {'ip': [addr[0], 8080]}
-        data = dumps(data).encode('utf-8')
-        res['status'] = 0
-        res['length'] = len(data)
-        fd.sendall(difuse_response.build(res)+data)
-    elif filename not in file_list:
-        res = {}
-        res['status'] = 0x01
-        res['length'] = 0
-        fd.sendall(difuse_response.build(res))
-    else:
-        res = {}
-        data = dumps({'ip': file_ip[req['file']]}).encode('utf-8')
-        res['status'] = 0
-        res['length'] = len(data)
-        fd.sendall(difuse_response.build(res)+data)
+    file_hash = sha1(filename)
+    ip = host_list[0]
+    for h in host_list:
+        if file_hash < h:
+            ip = h
+            break
+    data = b64encode(dumps({'ip': ip}))
+    res = {}
+    res['status'] = 0
+    res['length'] = 0
+    res = difuse_response.build(res)
+    fd.sendall(res+data)
 
 
 def create(fd, addr, req):
@@ -63,9 +62,11 @@ def rename(fd, addr, req):
 
 
 def join(fd, addr, req):
-    for f in req:
-        file_ip[f] = [addr[0], 8080]
-        file_list.append(f)
+    ip_hash = sha1(addr[0])
+    host_list.append(ip_hash)
+    host_list.sort()
+    hash2ip[ip_hash] = addr[0]
+    # send ip of successor
     res = {}
     res['status'] = 0
     res['length'] = 0
@@ -78,6 +79,7 @@ def leave(fd, addr, req):
     res = {}
     res['status'] = 0
     res['length'] = 0
+    # send ip of successor to migrate
     fd.sendall(difuse_response.build(res))
 
 
@@ -89,6 +91,8 @@ if __name__ == '__main__':
 
         file_list = []
         file_ip = {}
+        host_list = []
+        hash2ip = {}
         size = difuse_request.sizeof()
 
         handle = {
@@ -104,6 +108,7 @@ if __name__ == '__main__':
         while 0xDEAD:
             fd, addr = sock.accept()
             header = difuse_request.parse(fd.recv(size))
-            payload = loads(fd.recv(header.length)) if header.length else None
+            payload = fd.recv(header.length) if header.length else None
+            payload = loads(b64decode(payload))
             handle[header.op](fd, addr, payload)
             fd.close()
