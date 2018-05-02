@@ -37,6 +37,21 @@ def join():
 
     # TODO: receive and call recv_files
 
+def leave():
+    s = socket.socket()
+    s.connect((argv[1], int(argv[2])))
+    h = difuse_request.build({'op': 0x4, 'length':0})
+    s.sendall(h)
+    h = s.recv(difuse_response.sizeof())
+    h = difuse_response.parse(h)
+    data = s.recv(h.length)
+    data = loads(data.decode('utf-8'))
+    if data:
+        s.connect((data['ip'], 8080))
+        data = dumps({'hash': myhash}).encode('utf-8')
+        h = difuse_request.build({'op': 0x17, 'length':0})
+        s.sendall(h + data)
+
 
 def read(fd, req, addr):
     with open('/'.join((file_dir, req['file'])), 'rb') as f:
@@ -132,12 +147,13 @@ def recv_help(ip, my_hash):
     listenfd.close()
 
 
-def recv_files(ip, hash):
-    t = Thread(target=recv_help, args=[ip, hash])
+def recv_files(ip, ip_hash):
+    myhash = ip_hash
+    t = Thread(target=recv_help, args=[ip, ip_hash])
     t.start()
 
 def get_files(fd, req, addr):
-    t = Thread(target=recv_help, args[req['ip'], req['hash']])
+    t = Thread(target=recv_help, args[addr[1], req['hash']])
     t.start()
 
 def send_help(ip, port, other_hash):
@@ -165,7 +181,7 @@ if __name__ == '__main__':
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(('0.0.0.0', 8080))
         sock.listen()
-
+        myhash = 0
         size = difuse_request.sizeof()
 
         handle = {
