@@ -12,6 +12,9 @@ import sys
 
 # TODO: add file migration functionality
 
+
+
+
 def reqboot(op, data):
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serversocket.connect((argv[1], int(argv[2])))
@@ -74,6 +77,15 @@ def write(fd, req, addr):
         res['status'] = 0
         res['length'] = 0
         fd.sendall(difuse_response.build(res))
+
+
+def list_files(fd, req, addr):
+    data = dumps(os.listdir(file_dir)).encode('utf-8')
+    res = {}
+    res['status'] = 0
+    res['length'] = len(data)
+    res = difuse_response.build(res)
+    fd.sendall(res + data)
 
 
 def truncate(fd, req, addr):
@@ -202,7 +214,8 @@ if __name__ == '__main__':
             0x14: rm,
             0x15: rename,
             0x16: send_files,
-            0x17: get_files
+            0x17: get_files,
+            0x18: list_files
         }
 
         file_dir = 'difuse.local'

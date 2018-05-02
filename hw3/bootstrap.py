@@ -12,6 +12,18 @@ import sys
 # TODO: add function to remove node if connection terminated
 
 def list_dir(fd, addr, req):
+    ips = hash2ip.values()
+    file_list = []
+    for ip in ips:
+        with socket.create_connection((ip, 8080)) as s:
+            req = {}
+            req['op'] = 0x18
+            req['length'] = 0
+            req = difuse_request.build(req)
+            s.sendall(req)
+            res = s.recv(difuse_response.sizeof())
+            file_list += loads(s.recv(res.length))
+
     data = dumps(file_list).encode('utf-8')
     res = {}
     res['status'] = 0
