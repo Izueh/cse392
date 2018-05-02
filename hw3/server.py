@@ -32,10 +32,13 @@ def join():
     h = difuse_request.parse(h)
     data = s.recv(h.length)
     data = loads(data.decode('utf-8'))
-    print(data)
-     
+    if data:
+        recv_files(data['ip'], data['id'])
 
-def read(fd, req):
+    # TODO: receive and call recv_files
+
+
+def read(fd, req, addr):
     with open('/'.join((file_dir, req['file'])), 'rb') as f:
         f.seek(req['offset'])
         data = f.read(req['size'])
@@ -45,7 +48,7 @@ def read(fd, req):
         fd.sendall(difuse_response.build(res) + data)
 
 
-def write(fd, req):
+def write(fd, req, addr):
     with open('/'.join((file_dir, req['file'])), 'w+') as f:
         f.seek(req['offset'])
         f.write(req['data'])
@@ -55,7 +58,7 @@ def write(fd, req):
         fd.sendall(difuse_response.build(res))
 
 
-def truncate(fd, req):
+def truncate(fd, req, addr):
     with open('/'.join((file_dir, req['file'])), 'w+') as f:
         f.truncate(req['size'])
         res = {}
@@ -64,7 +67,7 @@ def truncate(fd, req):
         fd.sendall(difuse_response.build(res))
 
 
-def rename(fd, req):
+def rename(fd, req, addr):
     reqboot(0x07, req)
     os.rename('/'.join((file_dir, req['file'])),
               '/'.join((file_dir, req['newname'])))
@@ -76,7 +79,7 @@ def rename(fd, req):
     fd.sendall(h)
 
 
-def stat(fd, req):
+def stat(fd, req, addr):
     info = os.stat('/'.join((file_dir, req['file'])))
     stat = dict(st_mode=info.st_mode, st_nlink=info.st_nlink,
                 st_size=info.st_size, st_ctime=info.st_ctime,
@@ -89,7 +92,7 @@ def stat(fd, req):
     fd.sendall(h + data)
 
 
-def rm(fd, req):
+def rm(fd, req, addr):
     data = {'file': req['file']}
     reqboot(0x06, data)
     os.unlink('/'.join((file_dir, req['file'])))
@@ -153,8 +156,6 @@ def send_help(ip, port, other_hash):
 def send_files(fd, req, addr):
     t = Thread(target=send_help, args=[addr[0], req['port'], req['hash']])
     t.start()
-    # start thread
-    # thread will send files through this port
 
 
 if __name__ == '__main__':
@@ -182,4 +183,4 @@ if __name__ == '__main__':
             fd, addr = sock.accept()
             header = difuse_request.parse(fd.recv(size))
             payload = loads(fd.recv(header.length))
-            handle[header.op](fd, payload)
+            handle[header.op](fd, payload, addr)

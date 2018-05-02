@@ -3,6 +3,7 @@ from header_structs import difuse_request, difuse_response
 from json import loads, dumps
 from base64 import b64encode, b64decode
 from hashlib import sha1
+from time import time
 
 
 # TODO: add salted hash
@@ -62,8 +63,9 @@ def rename(fd, addr, req):
 
 
 def join(fd, addr, req):
-    ip_hash = sha1(addr[0].encode('utf-8')).hexdigest()
-    ip_hash = int(ip_hash, 16)
+    t = str(time()).encode('utf-8')
+    ip_hash = sha1(addr[0].encode('utf-8') + t).hexdigest()
+    ip_hash = int.from_bytes(ip_hash)
     host_list.append(ip_hash)
     host_list.sort()
     hash2ip[ip_hash] = addr[0]
@@ -73,9 +75,10 @@ def join(fd, addr, req):
     print(hash2ip)
     data = {}
     if(len(host_list) > 1):
-        index= (host_list.index(ip_hash) - 1) % len(host_list)
+        index = (host_list.index(ip_hash) + 1) % len(host_list)
         data = {
-            'succ': hash2ip[host_list[index]]
+            'ip': hash2ip[host_list[index]],
+            'id': ip_hash
         }
     data = dumps(data)
     data = data.encode('utf-8')
