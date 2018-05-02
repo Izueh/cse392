@@ -63,6 +63,7 @@ def rename(fd, addr, req):
 
 def join(fd, addr, req):
     ip_hash = sha1(addr[0].encode('utf-8')).hexdigest()
+    ip_hash = int(ip_hash, 16)
     host_list.append(ip_hash)
     host_list.sort()
     hash2ip[ip_hash] = addr[0]
