@@ -165,6 +165,7 @@ def get_files(fd, req, addr):
 
 def send_help(ip, port, other_hash):
     files = os.listdir(file_dir)
+    logging.debug(f'port: {port}')
     with socket.create_connection((ip, port)) as s:
         for fname in files:
             h = sha1(fname)
