@@ -129,7 +129,7 @@ def recv_help(ip, my_hash):
     listenfd = socket.socket()
     listenfd.bind(('0.0.0.0', 0))
     listenfd.listen()
-    port = s.getsockname(listenfd)
+    port = s.getsockname()
     data = dumps({'port': port[1], 'hash': my_hash})
     req = {}
     req['op'] = 0x16
