@@ -91,8 +91,26 @@ def leave(fd, addr, req):
     res = {}
     res['status'] = 0
     res['length'] = 0
+    ip_hash = [key for key, value in hash2ip.iteritems() if value == addr[0]][0]
+    host_list.remove(addr[1])
+    del host_list[ip_hash]
     # send ip of successor to migrate
-    fd.sendall(difuse_response.build(res))
+    host_list.sort()
+    hash2ip[ip_hash] = addr[0]
+    # send ip of successor
+    data = {}
+    if(len(host_list) > 1):
+        index = (host_list.index(ip_hash) + 1) % len(host_list)
+        data = {
+            'ip': hash2ip[host_list[index]],
+            'id': ip_hash
+        }
+    data = dumps(data)
+    data = data.encode('utf-8')
+    res = {}
+    res['status'] = 0
+    res['length'] = len(data)
+    fd.sendall(difuse_response.build(res) + data)
 
 
 if __name__ == '__main__':
