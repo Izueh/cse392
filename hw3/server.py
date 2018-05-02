@@ -148,13 +148,14 @@ def recv_help(ip, my_hash):
 
 
 def recv_files(ip, ip_hash):
-    myhash = ip_hash
     t = Thread(target=recv_help, args=[ip, ip_hash])
     t.start()
 
+
 def get_files(fd, req, addr):
-    t = Thread(target=recv_help, args[addr[1], req['hash']])
+    t = Thread(target=recv_help, args=[addr[1], req['hash']])
     t.start()
+
 
 def send_help(ip, port, other_hash):
     files = os.listdir(file_dir)
@@ -203,4 +204,4 @@ if __name__ == '__main__':
             fd, addr = sock.accept()
             header = difuse_request.parse(fd.recv(size))
             payload = loads(fd.recv(header.length))
-            eandle[header.op](fd, payload, addr)
+            handle[header.op](fd, payload, addr)
