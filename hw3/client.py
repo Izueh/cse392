@@ -29,6 +29,7 @@ class Memory(LoggingMixIn, Operations):
         return self.requestserver(op, data, ip, port)
 
     def requestserver(self, op, data, ip, port):
+        print("req server")
         serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         serversocket.connect((ip, port))
         data = dumps(data)
@@ -98,6 +99,7 @@ class Memory(LoggingMixIn, Operations):
     def getattr(self, path, fh=None):
         print('getattr', path)
         if path != '/':
+            print("EHEHE")
             path = path[1:]
         else:
             return dict(st_mode=S_IFDIR | 0o755, st_nlink=0,
@@ -226,7 +228,7 @@ class Memory(LoggingMixIn, Operations):
 
 
 if __name__ == "__main__":
-    ip = '127.0.0.1'
+    ip = '192.168.1.112'
     port = 8081
-    saving_path = '/home/jappatel/mount/save'
+    saving_path = 'difuse.local'
     fuse = FUSE(Memory(), argv[1], foreground=True)

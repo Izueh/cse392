@@ -32,6 +32,8 @@ def list_dir(fd, addr, req):
 
 
 def lookup(fd, addr, req):
+    print('lookup')
+    print(req['file'])
     filename = req['file']
     file_hash = sha1(filename)
     ip = host_list[0]
@@ -39,6 +41,7 @@ def lookup(fd, addr, req):
         if file_hash < h:
             ip = h
             break
+    print(ip)
     data = b64encode(dumps({'ip': ip}))
     res = {}
     res['status'] = 0
