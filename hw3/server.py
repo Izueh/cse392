@@ -136,6 +136,9 @@ def recv_files(ip, hash):
     t = Thread(target=recv_help, args=[ip, hash])
     t.start()
 
+def get_files(fd, req, addr):
+    t = Thread(target=recv_help, args[req['ip'], req['hash']])
+    t.start()
 
 def send_help(ip, port, other_hash):
     files = os.listdir(file_dir)
@@ -172,7 +175,8 @@ if __name__ == '__main__':
             0x13: truncate,
             0x14: rm,
             0x15: rename,
-            0x16: send_files
+            0x16: send_files,
+            0x17: get_files
         }
 
         file_dir = 'difuse.local'
@@ -183,4 +187,4 @@ if __name__ == '__main__':
             fd, addr = sock.accept()
             header = difuse_request.parse(fd.recv(size))
             payload = loads(fd.recv(header.length))
-            handle[header.op](fd, payload, addr)
+            eandle[header.op](fd, payload, addr)
