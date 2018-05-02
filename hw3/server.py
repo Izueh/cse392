@@ -138,7 +138,7 @@ def recv_help(ip, my_hash):
     req = difuse_request.build(req)
     s.sendall(req+data)
     s.close()
-    s = listenfd.accept()
+    s, conn = listenfd.accept()
     while(1):
         h = s.recv(difuse_request.sizeof())
         if not h:
@@ -150,6 +150,7 @@ def recv_help(ip, my_hash):
         f = open(data['fname'], 'wb')
         f.write(data['data'])
         f.close()
+    s.close()
     listenfd.close()
 
 
