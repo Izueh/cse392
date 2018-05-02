@@ -77,7 +77,7 @@ def join(fd, addr, req):
     hash2ip[ip_hash] = addr[0]
     # send ip of successor
     data = {}
-    if host_list:
+    if len(host_list) > 1:
         index = (host_list.index(ip_hash) + 1) % len(host_list)
         data = {
             'ip': hash2ip[host_list[index]],

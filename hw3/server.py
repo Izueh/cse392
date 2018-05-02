@@ -6,6 +6,8 @@ from sys import argv
 from threading import Thread
 from hashlib import sha1
 from base64 import b64encode, b64decode
+import logging
+import sys
 
 
 # TODO: add file migration functionality
@@ -30,6 +32,7 @@ def join():
     h = s.recv(difuse_response.sizeof())
     h = difuse_response.parse(h)
     data = s.recv(h.length)
+    logging.debug(f'data: {data}')
     data = loads(data.decode('utf-8'))
     if data:
         recv_files(data['ip'], data['id'])
@@ -179,6 +182,7 @@ def send_files(fd, req, addr):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(('0.0.0.0', 8080))
         sock.listen()
