@@ -88,9 +88,12 @@ class Memory(LoggingMixIn, Operations):
 
     def create(self, path, mode):
         print("create")
-        data = {'file': path[1:]}
-        self.requestboot(0x5, data)
-        return os.open(saving_path + path, os.O_WRONLY | os.O_CREAT, mode)
+        ip = self.requestip(path[1:])
+        payload = {'file': path, 'offset': 0, 'data': ''}
+        response = self.requestserver(0x12, payload, ip, 8080)
+        self.requestserver()
+        self.fd += 1
+        return self.fd
 
     def getattr(self, path, fh=None):
         print('getattr', path)
