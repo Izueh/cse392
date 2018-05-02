@@ -28,8 +28,8 @@ def join():
     data = dumps(os.listdir(file_dir)).encode('utf-8')
     h = difuse_request.build({'op': 0x3, 'length': len(data)})
     s.sendall(h+data)
-    h = s.recv(difuse_request.sizeof())
-    h = difuse_request.parse(h)
+    h = s.recv(difuse_response.sizeof())
+    h = difuse_response.parse(h)
     data = s.recv(h.length)
     data = loads(data.decode('utf-8'))
     if data:

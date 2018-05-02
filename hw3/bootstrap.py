@@ -70,9 +70,6 @@ def join(fd, addr, req):
     host_list.sort()
     hash2ip[ip_hash] = addr[0]
     # send ip of successor
-    print(ip_hash)
-    print(host_list)
-    print(hash2ip)
     data = {}
     if(len(host_list) > 1):
         index = (host_list.index(ip_hash) + 1) % len(host_list)
@@ -85,7 +82,6 @@ def join(fd, addr, req):
     res = {}
     res['status'] = 0
     res['length'] = len(data)
-    print(data)
     fd.sendall(difuse_response.build(res) + data)
 
 
