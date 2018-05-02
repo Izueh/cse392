@@ -125,7 +125,7 @@ def rm(fd, req, addr):
 def recv_help(ip, my_hash):
     logging.debug(f'ip: {ip}')
     logging.debug(f'hash: {my_hash}')
-    s = socket.create_connection(ip, 8080)
+    s = socket.create_connection((ip, 8080))
     listenfd = socket.socket()
     listenfd.bind(('0.0.0.0', 0))
     listenfd.listen()
@@ -164,7 +164,7 @@ def get_files(fd, req, addr):
 
 def send_help(ip, port, other_hash):
     files = os.listdir(file_dir)
-    with socket.create_connection(ip, port) as s:
+    with socket.create_connection((ip, port)) as s:
         for fname in files:
             h = sha1(fname)
             if h < other_hash:
