@@ -28,7 +28,12 @@ def join():
     data = dumps(os.listdir(file_dir)).encode('utf-8')
     h = difuse_request.build({'op': 0x3, 'length': len(data)})
     s.sendall(h+data)
-
+    h = s.recv(difuse_request.sizeof())
+    h = difuse_request.parse(h)
+    data = s.recv(h.length)
+    data = loads(data.decode('utf-8'))
+    print(data)
+     
 
 def read(fd, req):
     with open('/'.join((file_dir, req['file'])), 'rb') as f:
@@ -169,7 +174,7 @@ if __name__ == '__main__':
             0x16: send_files
         }
 
-        file_dir = '/home/jappatel/mount/save'
+        file_dir = 'difuse.local'
 
         join()
 
