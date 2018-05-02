@@ -62,21 +62,27 @@ def rename(fd, addr, req):
 
 
 def join(fd, addr, req):
-    ip_hash = sha1(addr[0])
+    ip_hash = sha1(addr[0].encode('utf-8')).hexdigest()
+    ip_hash = int(ip_hash, 16)
     host_list.append(ip_hash)
     host_list.sort()
     hash2ip[ip_hash] = addr[0]
     # send ip of successor
+    print(ip_hash)
+    print(host_list)
+    print(hash2ip)
     data = {}
     if(len(host_list) > 1):
+        index= (host_list.index(ip_hash) - 1) % len(host_list)
         data = {
-            'succ': hash2ip[ip_hash - 1]
+            'succ': hash2ip[host_list[index]]
         }
-        data = dumps(data)
-        data = data.encode('utf-8')
+    data = dumps(data)
+    data = data.encode('utf-8')
     res = {}
     res['status'] = 0
     res['length'] = len(data)
+    print(data)
     fd.sendall(difuse_response.build(res) + data)
 
 
@@ -93,7 +99,7 @@ def leave(fd, addr, req):
 if __name__ == '__main__':
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(('localhost', 8081))
+        sock.bind(('0.0.0.0', 8081))
         sock.listen()
 
         file_list = []
@@ -116,6 +122,8 @@ if __name__ == '__main__':
             fd, addr = sock.accept()
             header = difuse_request.parse(fd.recv(size))
             payload = fd.recv(header.length) if header.length else None
-            payload = loads(b64decode(payload))
+            print(header)
+            print(payload)
+            payload = loads((payload).decode('utf-8'))
             handle[header.op](fd, addr, payload)
             fd.close()
