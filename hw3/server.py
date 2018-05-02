@@ -130,7 +130,7 @@ def recv_help(ip, my_hash):
     listenfd.bind(('0.0.0.0', 0))
     listenfd.listen()
     port = s.getsockname()
-    data = dumps({'port': port[1], 'hash': my_hash})
+    data = dumps({'port': port[1], 'hash': my_hash}).encode('utf-8')
     req = {}
     req['op'] = 0x16
     req['length'] = len(data)
