@@ -4,6 +4,8 @@ from json import loads, dumps
 from base64 import b64encode, b64decode
 from hashlib import sha1
 from time import time
+import logging
+import sys
 
 
 # TODO: add salted hash
@@ -64,14 +66,18 @@ def rename(fd, addr, req):
 
 def join(fd, addr, req):
     t = str(time()).encode('utf-8')
-    ip_hash = sha1(addr[0].encode('utf-8') + t).hexdigest()
-    ip_hash = int.from_bytes(ip_hash)
+    logging.debug(t)
+    logging.debug(f'address = {addr[0]}')
+    ip_hash = sha1(addr[0].encode('utf-8') + t).digest()
+    logging.debug(f'hash = {ip_hash}')
+    ip_hash = int.from_bytes(ip_hash, byteorder='little')
+    logging.debug(f'hash = {ip_hash}')
     host_list.append(ip_hash)
     host_list.sort()
     hash2ip[ip_hash] = addr[0]
     # send ip of successor
     data = {}
-    if(len(host_list) > 1):
+    if host_list:
         index = (host_list.index(ip_hash) + 1) % len(host_list)
         data = {
             'ip': hash2ip[host_list[index]],
@@ -92,15 +98,13 @@ def leave(fd, addr, req):
     res['status'] = 0
     res['length'] = 0
     ip_hash = [key for key, value in hash2ip.iteritems() if value == addr[0]][0]
+    index = (host_list.index(ip_hash) + 1) % len(host_list)
     host_list.remove(addr[1])
-    del host_list[ip_hash]
+    del hash2ip[ip_hash]
     # send ip of successor to migrate
-    host_list.sort()
-    hash2ip[ip_hash] = addr[0]
     # send ip of successor
     data = {}
     if(len(host_list) > 1):
-        index = (host_list.index(ip_hash) + 1) % len(host_list)
         data = {
             'ip': hash2ip[host_list[index]],
             'id': ip_hash
@@ -114,6 +118,7 @@ def leave(fd, addr, req):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(('0.0.0.0', 8081))
@@ -138,9 +143,9 @@ if __name__ == '__main__':
         while 0xDEAD:
             fd, addr = sock.accept()
             header = difuse_request.parse(fd.recv(size))
-            payload = fd.recv(header.length) if header.length else None
-            print(header)
-            print(payload)
-            payload = loads((payload).decode('utf-8'))
+            payload = None
+            if header.length:
+                payload = fd.recv(header.length)
+                payload = loads((payload).decode('utf-8'))
             handle[header.op](fd, addr, payload)
             fd.close()

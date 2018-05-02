@@ -25,9 +25,8 @@ def reqboot(op, data):
 def join():
     s = socket.socket()
     s.connect((argv[1], int(argv[2])))
-    data = dumps(os.listdir(file_dir)).encode('utf-8')
-    h = difuse_request.build({'op': 0x3, 'length': len(data)})
-    s.sendall(h+data)
+    h = difuse_request.build({'op': 0x3, 'length': 0})
+    s.sendall(h)
     h = s.recv(difuse_response.sizeof())
     h = difuse_response.parse(h)
     data = s.recv(h.length)
@@ -37,10 +36,11 @@ def join():
 
     # TODO: receive and call recv_files
 
+
 def leave():
     s = socket.socket()
     s.connect((argv[1], int(argv[2])))
-    h = difuse_request.build({'op': 0x4, 'length':0})
+    h = difuse_request.build({'op': 0x4, 'length': 0})
     s.sendall(h)
     h = s.recv(difuse_response.sizeof())
     h = difuse_response.parse(h)
@@ -49,7 +49,7 @@ def leave():
     if data:
         s.connect((data['ip'], 8080))
         data = dumps({'hash': myhash}).encode('utf-8')
-        h = difuse_request.build({'op': 0x17, 'length':0})
+        h = difuse_request.build({'op': 0x17, 'length': 0})
         s.sendall(h + data)
 
 
@@ -202,6 +202,10 @@ if __name__ == '__main__':
 
         while 0xCAFE:
             fd, addr = sock.accept()
+            payload = None
             header = difuse_request.parse(fd.recv(size))
-            payload = loads(fd.recv(header.length))
+            if header.length:
+                payload = fd.recv(header.length)
+                payload = loads((payload).decode('utf-8'))
             handle[header.op](fd, payload, addr)
+            fd.close()
