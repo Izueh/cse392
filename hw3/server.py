@@ -123,6 +123,8 @@ def rm(fd, req, addr):
 
 
 def recv_help(ip, my_hash):
+    logging.debug(f'ip: {ip}')
+    logging.debug(f'hash: {my_hash}')
     s = socket.create_connection(ip, 8080)
     listenfd = socket.socket()
     listenfd.bind(('0.0.0.0', 0))
