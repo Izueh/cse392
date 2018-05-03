@@ -90,8 +90,8 @@ class Memory(LoggingMixIn, Operations):
     def create(self, path, mode):
         print("create")
         ip = self.requestip(path[1:])
-        payload = {'file': path, 'offset': 0, 'data': ''}
-        response = self.requestserver(0x12, payload, ip, 8080)
+        payload = {'file': path}
+        response = self.requestserver(0x19, payload, ip, 8080)
         self.fd += 1
         return self.fd
 

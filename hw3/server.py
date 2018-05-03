@@ -67,12 +67,20 @@ def read(fd, req, addr):
         fd.sendall(difuse_response.build(res) + data)
 
 
+def create(fd, req, addr):
+    f = open('/'.join((file_dir, req['file'])), 'w')
+    f.close()
+    res = {'status': 0, 'length': 0}
+    fd.sendall(difuse_response.build(res))
+
+
+
 def write(fd, req, addr):
-    with open('/'.join((file_dir, req['file'])), 'ab') as f:
+    with open('/'.join((file_dir, req['file'])), 'r+b') as f:
         f.seek(req['offset'])
         data = req['data'].encode('utf-8')
         data = b64decode(data)
-        f.write(str(data, 'utf-8'))
+        f.write(data)
         res = {}
         res['status'] = 0
         res['length'] = 0
@@ -230,7 +238,8 @@ if __name__ == '__main__':
             0x15: rename,
             0x16: send_files,
             0x17: get_files,
-            0x18: list_files
+            0x18: list_files,
+            0x19: create
         }
 
         file_dir = 'difuse.local'
