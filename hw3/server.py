@@ -70,7 +70,7 @@ def write(fd, req, addr):
         f.seek(req['offset'])
         data = req['data'].encode('utf-8')
         data = b64decode(data)
-        f.write(data)
+        f.write(str(data, 'utf-8'))
         res = {}
         res['status'] = 0
         res['length'] = 0
@@ -184,7 +184,7 @@ def send_help(ip, port, other_hash):
             h = sha1(fname.encode('utf-8')).digest()
             h = int.from_bytes(h, byteorder='little')
             print(h)
-            if True: # h < other_hash:
+            if h < other_hash:
                 fname = '/'.join((file_dir, fname))
                 f = open(fname, 'rb')
                 data = b64encode(f.read())
