@@ -29,7 +29,6 @@ class Memory(LoggingMixIn, Operations):
         return self.requestserver(op, data, ip, port)
 
     def requestserver(self, op, data, ip, port):
-        print("req server")
         serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         serversocket.connect((ip, port))
         data = dumps(data)
@@ -49,7 +48,6 @@ class Memory(LoggingMixIn, Operations):
             st = serversocket.recv(res_header.length)
             st = st.decode('utf-8')
             st = loads(st)
-        print(st)
         return st
 
     def requestread(self, op, data, ip, port):
@@ -107,11 +105,9 @@ class Memory(LoggingMixIn, Operations):
                         st_mtime=time(), st_atime=time())
         data = {'file': path}
         ip = self.requestip(path)
-        print(ip, path)
         attribute = self.requestserver(0x10, data, ip, 8080)
         if attribute == {}:
             raise FuseOSError(ENOENT)
-        print(attribute)
         return attribute
 
     def getxattr(self, path, name, position=0):
@@ -120,7 +116,7 @@ class Memory(LoggingMixIn, Operations):
             path = path[1:]
         data = {'file': path}
         ip = self.requestip(path)
-        attribute = self.requestserver(0x10, data, ip[0], ip[1])
+        attribute = self.requestserver(0x10, data, ip, 8080)
         try:
             return attribute[name]
         except:
@@ -145,15 +141,13 @@ class Memory(LoggingMixIn, Operations):
     def read(self, path, size, offset, fh):
         print("read")
         ip = self.requestip(path[1:])
-        print(ip)
         data = {'file': path, 'offset': offset, 'size': size}
-        response = self.requestread(0x11, data, ip[0], ip[1])
+        response = self.requestread(0x11, data, ip, 8080)
         return response
 
     def readdir(self, path, fh):
         print('readdir')
         st = self.requestboot(0x1, {})
-        print('h', st)
         return ['.', '..'] + st
 
     def readlink(self, path):
@@ -173,7 +167,7 @@ class Memory(LoggingMixIn, Operations):
         print(old, new)
         ip = self.requestip(old[1:])
         data = {'file': old[1:], 'newname': new[1:]}
-        self.requestserver(0x15, data, ip[0], ip[1])
+        self.requestserver(0x15, data, ip, 8080)
 
     def rmdir(self, path):
         print("rmdir")
@@ -201,14 +195,14 @@ class Memory(LoggingMixIn, Operations):
         ip = self.requestip(path[1:])
         print(ip)
         data = {'file': path, 'size': length}
-        response = self.requestread(0x13, data, ip[0], ip[1])
+        response = self.requestread(0x13, data, ip, 8080)
 
     def unlink(self, path):
         print("unlink")
         ip = self.requestip(path[1:])
         print(ip)
         data = {'file': path[1:]}
-        response = self.requestserver(0x14, data, ip[0], ip[1])
+        response = self.requestserver(0x14, data, ip, 8080)
 
     def utimens(self, path, times=None):
         print("utimens")
@@ -221,10 +215,9 @@ class Memory(LoggingMixIn, Operations):
     def write(self, path, data, offset, fh):
         print("write")
         ip = self.requestip(path[1:])
-        print(ip)
         data = data.decode('utf-8')
         payload = {'file': path, 'offset': offset, 'data': data}
-        response = self.requestserver(0x12, payload, ip[0], ip[1])
+        response = self.requestserver(0x12, payload, ip, 8080)
         return len(data)
 
 
