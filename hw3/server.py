@@ -183,7 +183,7 @@ def send_help(ip, port, other_hash):
                 f = open(fname, 'rb')
                 data = b64encode(f.read())
                 f.close()
-                os.unlink(fname)
+                os.unlink('/'.join((file_dir, fname)))
                 data = dumps({'fname': fname, 'data': data})
                 req = {'op': 0, 'length': len(data)}
                 req = difuse_request.build(req)
