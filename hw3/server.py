@@ -184,7 +184,8 @@ def recv_files(ip, ip_hash):
 
 
 def get_files(fd, req, addr):
-    t = Thread(target=recv_help, args=[addr[1], req['hash']])
+    print('ehehe', req, addr)
+    t = Thread(target=recv_help, args=[addr[0], req['hash']])
     t.start()
 
 
