@@ -90,8 +90,8 @@ class Memory(LoggingMixIn, Operations):
     def create(self, path, mode):
         print("create")
         ip = self.requestip(path[1:])
-        payload = {'file': path, 'offset': 0, 'data': ''}
-        response = self.requestserver(0x12, payload, ip, 8080)
+        payload = {'file': path}
+        response = self.requestserver(0x19, payload, ip, 8080)
         self.fd += 1
         return self.fd
 
@@ -105,7 +105,7 @@ class Memory(LoggingMixIn, Operations):
                         st_mtime=time(), st_atime=time())
         data = {'file': path}
         ip = self.requestip(path)
-	print(path, ip)
+        print(ip, path)
         attribute = self.requestserver(0x10, data, ip, 8080)
         if attribute == {}:
             raise FuseOSError(ENOENT)
@@ -117,7 +117,7 @@ class Memory(LoggingMixIn, Operations):
             path = path[1:]
         data = {'file': path}
         ip = self.requestip(path)
-	print(path, ip)
+        print(ip, path)
         attribute = self.requestserver(0x10, data, ip, 8080)
         try:
             return attribute[name]
