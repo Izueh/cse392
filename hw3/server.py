@@ -26,6 +26,7 @@ def reqboot(op, data):
 
 
 def join():
+    global my_id
     s = socket.socket()
     s.connect((argv[1], int(argv[2])))
     h = difuse_request.build({'op': 0x3, 'length': 0})
@@ -35,13 +36,16 @@ def join():
     data = s.recv(h.length)
     logging.debug(f'data: {data}')
     data = loads(data.decode('utf-8'))
-    if data:
+    my_id = data['id']
+    if 'ip' in data:
         recv_files(data['ip'], data['id'])
 
     # TODO: receive and call recv_files
 
 
 def leave():
+    global leaving
+    leaving = True
     s = socket.socket()
     s.connect((argv[1], int(argv[2])))
     h = difuse_request.build({'op': 0x4, 'length': 0})
@@ -197,18 +201,30 @@ def send_help(ip, port, other_hash):
             h = sha1(fname.encode('utf-8')).digest()
             h = int.from_bytes(h, byteorder='little')
             print(h)
-            print(other_hash)
-            if h < other_hash:
-                fname = '/'.join((file_dir, fname))
-                f = open(fname, 'rb')
-                data = b64encode(f.read())
-                data = data.decode('utf-8')
-                f.close()
-                os.unlink(fname)
-                data = (dumps({'fname': fname, 'data': data})).encode('utf-8')
-                req = {'op': 0, 'length': len(data)}
-                req = difuse_request.build(req)
-                s.sendall(req+data)
+            if other_hash > my_id:
+                if my_id < h < other_hash or leaving:
+                    fname = '/'.join((file_dir, fname))
+                    f = open(fname, 'rb')
+                    data = b64encode(f.read())
+                    data = data.decode('utf-8')
+                    f.close()
+                    os.unlink(fname)
+                    data = (dumps({'fname': fname, 'data': data})).encode('utf-8')
+                    req = {'op': 0, 'length': len(data)}
+                    req = difuse_request.build(req)
+                    s.sendall(req+data)
+            else:
+                if h < other_hash or h > my_id or leaving:
+                    fname = '/'.join((file_dir, fname))
+                    f = open(fname, 'rb')
+                    data = b64encode(f.read())
+                    data = data.decode('utf-8')
+                    f.close()
+                    os.unlink(fname)
+                    data = (dumps({'fname': fname, 'data': data})).encode('utf-8')
+                    req = {'op': 0, 'length': len(data)}
+                    req = difuse_request.build(req)
+                    s.sendall(req+data)
 
 
 def send_files(fd, req, addr):
@@ -229,6 +245,7 @@ if __name__ == '__main__':
         myhash = 0
         size = difuse_request.sizeof()
         done = False
+        leaving = False
         r, w = os.pipe()
         os.set_blocking(w, False)
         signal.set_wakeup_fd(w)

@@ -92,13 +92,10 @@ def join(fd, addr, req):
     host_list.sort()
     hash2ip[ip_hash] = addr[0]
     # send ip of successor
-    data = {}
+    data = {'id': ip_hash}
     if len(host_list) > 1:
         index = (host_list.index(ip_hash) + 1) % len(host_list)
-        data = {
-            'ip': hash2ip[host_list[index]],
-            'id': ip_hash
-        }
+        data['ip'] = hash2ip[host_list[index]]
     data = dumps(data)
     data = data.encode('utf-8')
     res = {}
@@ -120,12 +117,9 @@ def leave(fd, addr, req):
     del hash2ip[ip_hash]
     # send ip of successor to migrate
     # send ip of successor
-    data = {}
-    if(len(host_list) > 0):
-        data = {
-            'ip': succ,
-            'id': ip_hash
-        }
+    data = {'id': ip_hash}
+    if len(host_list) > 1:
+        data['ip'] = succ
     data = dumps(data)
     data = data.encode('utf-8')
     res = {}
