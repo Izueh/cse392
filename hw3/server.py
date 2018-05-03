@@ -70,7 +70,7 @@ def write(fd, req, addr):
         f.seek(req['offset'])
         data = req['data'].encode('utf-8')
         data = b64decode(data)
-        f.write(req['data'])
+        f.write(data)
         res = {}
         res['status'] = 0
         res['length'] = 0
