@@ -110,17 +110,19 @@ def rename(fd, req, addr):
 
 
 def stat(fd, req, addr):
-    info = os.stat('/'.join((file_dir, req['file'])))
-    stat = dict(st_mode=info.st_mode, st_nlink=info.st_nlink,
-                st_size=info.st_size, st_ctime=info.st_ctime,
-                st_mtime=info.st_mtime, st_atime=info.st_atime)
-    data = dumps(stat).encode('utf-8')
+    filepath = '/'.join((file_dir, req['file']
+    data = {}
+    if(os.path.isfile(filepath)):
+	    info = os.stat(filepath)
+	    stat = dict(st_mode=info.st_mode, st_nlink=info.st_nlink,
+			st_size=info.st_size, st_ctime=info.st_ctime,
+			st_mtime=info.st_mtime, st_atime=info.st_atime)
+	    data = dumps(stat).encode('utf-8')
     res = {}
     res['status'] = 0
     res['length'] = len(data)
     h = difuse_response.build(res)
     fd.sendall(h + data)
-
 
 def rm(fd, req, addr):
     data = {'file': req['file']}
