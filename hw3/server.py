@@ -275,12 +275,13 @@ if __name__ == '__main__':
             if r in read:
                 leave()
                 continue
-            fd, addr = sock.accept()
-            payload = None
-            header = difuse_request.parse(fd.recv(size))
-            if header.length:
-                payload = fd.recv(header.length)
-                payload = loads((payload).decode('utf-8'))
-            handle[header.op](fd, payload, addr)
-            fd.close()
+            elif sock in read:
+                fd, addr = sock.accept()
+                payload = None
+                header = difuse_request.parse(fd.recv(size))
+                if header.length:
+                    payload = fd.recv(header.length)
+                    payload = loads((payload).decode('utf-8'))
+                handle[header.op](fd, payload, addr)
+                fd.close()
         logging.debug('leaving')
