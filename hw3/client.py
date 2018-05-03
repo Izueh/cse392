@@ -105,6 +105,7 @@ class Memory(LoggingMixIn, Operations):
                         st_mtime=time(), st_atime=time())
         data = {'file': path}
         ip = self.requestip(path)
+        print(ip, path)
         attribute = self.requestserver(0x10, data, ip, 8080)
         if attribute == {}:
             raise FuseOSError(ENOENT)
@@ -116,6 +117,7 @@ class Memory(LoggingMixIn, Operations):
             path = path[1:]
         data = {'file': path}
         ip = self.requestip(path)
+        print(ip, path)
         attribute = self.requestserver(0x10, data, ip, 8080)
         try:
             return attribute[name]

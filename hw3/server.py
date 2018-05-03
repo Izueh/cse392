@@ -50,10 +50,12 @@ def leave():
     h = difuse_response.parse(h)
     data = s.recv(h.length)
     data = loads(data.decode('utf-8'))
+    print('leave', data)
     if data:
+        s = socket.socket()
         s.connect((data['ip'], 8080))
         data = dumps({'hash': myhash}).encode('utf-8')
-        h = difuse_request.build({'op': 0x17, 'length': 0})
+        h = difuse_request.build({'op': 0x17, 'length': len(data)})
         s.sendall(h + data)
 
 
@@ -194,6 +196,7 @@ def send_help(ip, port, other_hash):
             h = sha1(fname.encode('utf-8')).digest()
             h = int.from_bytes(h, byteorder='little')
             print(h)
+            print(other_hash)
             if h < other_hash:
                 fname = '/'.join((file_dir, fname))
                 f = open(fname, 'rb')
