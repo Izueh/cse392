@@ -44,8 +44,6 @@ def join():
 
 
 def leave():
-    global leaving
-    leaving = True
     s = socket.socket()
     s.connect((argv[1], int(argv[2])))
     h = difuse_request.build({'op': 0x4, 'length': 0})
@@ -231,13 +229,14 @@ def send_files(fd, req, addr):
     global done
     t = Thread(target=send_help, args=[addr[0], req['port'], req['hash']])
     t.start()
-    if leaving:
+    if left:
         t.join()
         done = True
 
 
 def sig_int(signum, frame):
-    pass
+    global leaving
+    leaving = True
 
 
 if __name__ == '__main__':
@@ -249,6 +248,7 @@ if __name__ == '__main__':
         size = difuse_request.sizeof()
         done = False
         leaving = False
+        left = False
         r, w = os.pipe()
         os.set_blocking(w, False)
         signal.set_wakeup_fd(w)
@@ -272,13 +272,21 @@ if __name__ == '__main__':
 
         while not done:
             read, _, _ = select.select([sock, r], [], [])
-            if r in read:
+            if leaving and not left:
                 leave()
+                leaving = False
+                left = True
                 continue
             elif sock in read:
                 fd, addr = sock.accept()
                 payload = None
                 header = difuse_request.parse(fd.recv(size))
+                if left and header.op != 0x16:
+                    res = {}
+                    res['status'] = -1
+                    res['length'] = 0
+                    res = difuse_response.build(res)
+                    fd.sendall(res)
                 if header.length:
                     payload = fd.recv(header.length)
                     payload = loads((payload).decode('utf-8'))
