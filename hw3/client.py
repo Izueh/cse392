@@ -8,6 +8,7 @@ import os
 from json import loads, dumps
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
 from header_structs import difuse_request, difuse_response
+from base64 import b64encode
 
 
 class Memory(LoggingMixIn, Operations):
@@ -214,6 +215,7 @@ class Memory(LoggingMixIn, Operations):
     def write(self, path, data, offset, fh):
         print("write")
         ip = self.requestip(path[1:])
+        data = b64encode(data)
         data = data.decode('utf-8')
         payload = {'file': path, 'offset': offset, 'data': data}
         response = self.requestserver(0x12, payload, ip, 8080)
