@@ -50,7 +50,11 @@ def leave():
     h = difuse_response.parse(h)
     data = s.recv(h.length)
     data = loads(data.decode('utf-8'))
+<<<<<<< HEAD
+    print(data)
+=======
     print('leave', data)
+>>>>>>> d9c508be264477bb7d972d78011a7b27398c4bfc
     if data:
         s = socket.socket()
         s.connect((data['ip'], 8080))
