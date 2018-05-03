@@ -228,13 +228,16 @@ def send_help(ip, port, other_hash):
 
 
 def send_files(fd, req, addr):
+    global done
     t = Thread(target=send_help, args=[addr[0], req['port'], req['hash']])
     t.start()
+    if leaving:
+        t.join()
+        done = True
 
 
 def sig_int(signum, frame):
-    global done
-    done = True
+    pass
 
 
 if __name__ == '__main__':
@@ -269,7 +272,8 @@ if __name__ == '__main__':
 
         while not done:
             read, _, _ = select.select([sock, r], [], [])
-            if sock not in read:
+            if r in read:
+                leave()
                 continue
             fd, addr = sock.accept()
             payload = None
@@ -280,4 +284,3 @@ if __name__ == '__main__':
             handle[header.op](fd, payload, addr)
             fd.close()
         logging.debug('leaving')
-        leave()
