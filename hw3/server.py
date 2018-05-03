@@ -68,7 +68,7 @@ def read(fd, req, addr):
 
 
 def write(fd, req, addr):
-    with open('/'.join((file_dir, req['file'])), 'w+') as f:
+    with open('/'.join((file_dir, req['file'])), 'ab') as f:
         f.seek(req['offset'])
         data = req['data'].encode('utf-8')
         data = b64decode(data)
