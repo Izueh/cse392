@@ -287,6 +287,8 @@ if __name__ == '__main__':
                     res['length'] = 0
                     res = difuse_response.build(res)
                     fd.sendall(res)
+                    fd.close()
+                    continue
                 if header.length:
                     payload = fd.recv(header.length)
                     payload = loads((payload).decode('utf-8'))
