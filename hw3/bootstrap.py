@@ -21,7 +21,7 @@ def list_dir(fd, addr, req):
             req['length'] = 0
             req = difuse_request.build(req)
             s.sendall(req)
-            res = s.recv(difuse_response.sizeof())
+            res = difuse_response.parse(s.recv(difuse_response.sizeof()))
             file_list += loads(s.recv(res.length))
 
     data = dumps(file_list).encode('utf-8')
@@ -32,20 +32,20 @@ def list_dir(fd, addr, req):
 
 
 def lookup(fd, addr, req):
-    print('lookup')
-    print(req['file'])
+    print('lookup', req['file'])
     filename = req['file']
-    file_hash = sha1(filename)
+    file_hash = sha1(filename.encode('utf-8')).digest()
+    file_hash = int.from_bytes(file_hash, byteorder='little')
     ip = host_list[0]
     for h in host_list:
         if file_hash < h:
             ip = h
             break
-    print(ip)
-    data = b64encode(dumps({'ip': ip}))
+    ip = hash2ip[ip]
+    data = (dumps({'ip': ip})).encode('utf-8')
     res = {}
     res['status'] = 0
-    res['length'] = 0
+    res['length'] = len(data)
     res = difuse_response.build(res)
     fd.sendall(res+data)
 
@@ -159,6 +159,7 @@ if __name__ == '__main__':
             fd, addr = sock.accept()
             header = difuse_request.parse(fd.recv(size))
             payload = None
+            print(header)
             if header.length:
                 payload = fd.recv(header.length)
                 payload = loads((payload).decode('utf-8'))

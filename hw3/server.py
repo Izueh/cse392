@@ -121,7 +121,6 @@ def stat(fd, req, addr):
     h = difuse_response.build(res)
     fd.sendall(h + data)
 
-
 def rm(fd, req, addr):
     data = {'file': req['file']}
     reqboot(0x06, data)
