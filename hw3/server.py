@@ -180,12 +180,13 @@ def send_help(ip, port, other_hash):
         for fname in files:
             h = sha1(fname.encode('utf-8')).digest()
             h = int.from_bytes(h, byteorder='little')
- 
+            print(h)
             if h < other_hash:
+                fname = '/'.join((file_dir, fname))
                 f = open(fname, 'rb')
-                data = b64encode(f.read())
+                data = b64encode(f.read().decode('utf-8'))
                 f.close()
-                os.unlink('/'.join((file_dir, fname)))
+                os.unlink(fname)
                 data = dumps({'fname': fname, 'data': data})
                 req = {'op': 0, 'length': len(data)}
                 req = difuse_request.build(req)
@@ -225,7 +226,6 @@ if __name__ == '__main__':
             fd, addr = sock.accept()
             payload = None
             header = difuse_request.parse(fd.recv(size))
-            print(header)
             if header.length:
                 payload = fd.recv(header.length)
                 payload = loads((payload).decode('utf-8'))
