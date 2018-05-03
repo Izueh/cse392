@@ -49,6 +49,7 @@ class Memory(LoggingMixIn, Operations):
             st = serversocket.recv(res_header.length)
             st = st.decode('utf-8')
             st = loads(st)
+        print(st)
         return st
 
     def requestread(self, op, data, ip, port):
@@ -99,7 +100,6 @@ class Memory(LoggingMixIn, Operations):
     def getattr(self, path, fh=None):
         print('getattr', path)
         if path != '/':
-            print("EHEHE")
             path = path[1:]
         else:
             return dict(st_mode=S_IFDIR | 0o755, st_nlink=0,
@@ -108,10 +108,10 @@ class Memory(LoggingMixIn, Operations):
         data = {'file': path}
         ip = self.requestip(path)
         print(ip, path)
-        attribute = self.requestserver(0x10, data, ip[0], ip[1])
-        # if path not in self.files:
-        #    raise FuseOSError(ENOENT)
-        # st = self.files[path]
+        attribute = self.requestserver(0x10, data, ip, 8080)
+        if attribute == {}:
+            raise FuseOSError(ENOENT)
+        print(attribute)
         return attribute
 
     def getxattr(self, path, name, position=0):
@@ -123,8 +123,8 @@ class Memory(LoggingMixIn, Operations):
         attribute = self.requestserver(0x10, data, ip[0], ip[1])
         try:
             return attribute[name]
-        except KeyError:
-            return ''       # Should return ENOATTR
+        except:
+            raise FuseOSError(ENOENT)
 
     def listxattr(self, path):
         print("listxattr")
@@ -153,6 +153,7 @@ class Memory(LoggingMixIn, Operations):
     def readdir(self, path, fh):
         print('readdir')
         st = self.requestboot(0x1, {})
+        print('h', st)
         return ['.', '..'] + st
 
     def readlink(self, path):

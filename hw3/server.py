@@ -11,10 +11,6 @@ import sys
 
 
 # TODO: add file migration functionality
-
-
-
-
 def reqboot(op, data):
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serversocket.connect((argv[1], int(argv[2])))
@@ -110,11 +106,15 @@ def rename(fd, req, addr):
 
 
 def stat(fd, req, addr):
-    info = os.stat('/'.join((file_dir, req['file'])))
-    stat = dict(st_mode=info.st_mode, st_nlink=info.st_nlink,
-                st_size=info.st_size, st_ctime=info.st_ctime,
-                st_mtime=info.st_mtime, st_atime=info.st_atime)
-    data = dumps(stat).encode('utf-8')
+    filepath = '/'.join((file_dir, req['file']))
+    data = {}
+    if(os.path.isfile(filepath)):
+            info = os.stat(filepath)
+            stat = dict(st_mode=info.st_mode, st_nlink=info.st_nlink,
+                        st_size=info.st_size, st_ctime=info.st_ctime,
+                        st_mtime=info.st_mtime, st_atime=info.st_atime)
+            data = stat
+    data = dumps(data).encode('utf-8')
     res = {}
     res['status'] = 0
     res['length'] = len(data)
@@ -226,6 +226,7 @@ if __name__ == '__main__':
             fd, addr = sock.accept()
             payload = None
             header = difuse_request.parse(fd.recv(size))
+            print(header)
             if header.length:
                 payload = fd.recv(header.length)
                 payload = loads((payload).decode('utf-8'))
