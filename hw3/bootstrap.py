@@ -112,9 +112,9 @@ def leave(fd, addr, req):
     res = {}
     res['status'] = 0
     res['length'] = 0
-    ip_hash = [key for key, value in hash2ip.iteritems() if value == addr[0]][0]
+    ip_hash = [key for key, value in hash2ip.items() if value == addr[0]][0]
     index = (host_list.index(ip_hash) + 1) % len(host_list)
-    host_list.remove(addr[1])
+    host_list.remove(ip_hash)
     del hash2ip[ip_hash]
     # send ip of successor to migrate
     # send ip of successor

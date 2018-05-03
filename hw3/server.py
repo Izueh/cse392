@@ -6,7 +6,9 @@ from sys import argv
 from threading import Thread
 from hashlib import sha1
 from base64 import b64encode, b64decode
+import select
 import logging
+import signal
 import sys
 
 
@@ -202,6 +204,11 @@ def send_files(fd, req, addr):
     t.start()
 
 
+def sig_int(signum, frame):
+    global done
+    done = True
+
+
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -209,7 +216,11 @@ if __name__ == '__main__':
         sock.listen()
         myhash = 0
         size = difuse_request.sizeof()
-
+        done = False
+        r, w = os.pipe()
+        os.set_blocking(w, False)
+        signal.set_wakeup_fd(w)
+        signal.signal(signal.SIGINT, sig_int)
         handle = {
             0x10: stat,
             0x11: read,
@@ -226,7 +237,10 @@ if __name__ == '__main__':
 
         join()
 
-        while 0xCAFE:
+        while not done:
+            read, _, _ = select.select([sock, r], [], [])
+            if sock not in read:
+                continue
             fd, addr = sock.accept()
             payload = None
             header = difuse_request.parse(fd.recv(size))
@@ -235,3 +249,5 @@ if __name__ == '__main__':
                 payload = loads((payload).decode('utf-8'))
             handle[header.op](fd, payload, addr)
             fd.close()
+        logging.debug('leaving')
+        leave()
