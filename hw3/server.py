@@ -181,13 +181,13 @@ def send_help(ip, port, other_hash):
             h = sha1(fname.encode('utf-8')).digest()
             h = int.from_bytes(h, byteorder='little')
             print(h)
-            if h < other_hash:
+            if True: # h < other_hash:
                 fname = '/'.join((file_dir, fname))
                 f = open(fname, 'rb')
-                data = b64encode(f.read().decode('utf-8'))
+                data = b64encode(f.read())
                 f.close()
                 os.unlink(fname)
-                data = dumps({'fname': fname, 'data': data})
+                data = (dumps({'fname': fname, 'data': data})).encode('utf-8')
                 req = {'op': 0, 'length': len(data)}
                 req = difuse_request.build(req)
                 s.sendall(req+data)
