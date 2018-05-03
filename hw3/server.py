@@ -94,7 +94,6 @@ def truncate(fd, req, addr):
 
 
 def rename(fd, req, addr):
-    reqboot(0x07, req)
     os.rename('/'.join((file_dir, req['file'])),
               '/'.join((file_dir, req['newname'])))
 
@@ -123,7 +122,6 @@ def stat(fd, req, addr):
 
 def rm(fd, req, addr):
     data = {'file': req['file']}
-    reqboot(0x06, data)
     os.unlink('/'.join((file_dir, req['file'])))
 
     res = {}
