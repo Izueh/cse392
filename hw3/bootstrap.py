@@ -118,7 +118,7 @@ def leave(fd, addr, req):
     # send ip of successor to migrate
     # send ip of successor
     data = {'id': ip_hash}
-    if len(host_list) > 1:
+    if len(host_list) > 0:
         data['ip'] = succ
     data = dumps(data)
     data = data.encode('utf-8')
