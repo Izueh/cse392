@@ -178,7 +178,9 @@ def send_help(ip, port, other_hash):
     logging.debug(f'port: {port}')
     with socket.create_connection((ip, port)) as s:
         for fname in files:
-            h = sha1(fname)
+            h = sha1(filename.encode('utf-8')).digest()
+            h = int.from_bytes(file_hash, byteorder='little')
+ 
             if h < other_hash:
                 f = open(fname, 'rb')
                 data = b64encode(f.read())
