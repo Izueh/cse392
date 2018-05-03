@@ -36,6 +36,7 @@ def lookup(fd, addr, req):
     filename = req['file']
     file_hash = sha1(filename.encode('utf-8')).digest()
     file_hash = int.from_bytes(file_hash, byteorder='little')
+    print(file_hash)
     ip = host_list[0]
     for h in host_list:
         if file_hash < h:
@@ -114,14 +115,15 @@ def leave(fd, addr, req):
     res['length'] = 0
     ip_hash = [key for key, value in hash2ip.items() if value == addr[0]][0]
     index = (host_list.index(ip_hash) + 1) % len(host_list)
+    succ = hash2ip[host_list[index]]
     host_list.remove(ip_hash)
     del hash2ip[ip_hash]
     # send ip of successor to migrate
     # send ip of successor
     data = {}
-    if(len(host_list) > 1):
+    if(len(host_list) > 0):
         data = {
-            'ip': hash2ip[host_list[index]],
+            'ip': succ,
             'id': ip_hash
         }
     data = dumps(data)

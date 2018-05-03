@@ -50,6 +50,7 @@ def leave():
     h = difuse_response.parse(h)
     data = s.recv(h.length)
     data = loads(data.decode('utf-8'))
+    print(data)
     if data:
         s.connect((data['ip'], 8080))
         data = dumps({'hash': myhash}).encode('utf-8')
