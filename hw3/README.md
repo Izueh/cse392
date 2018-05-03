@@ -17,4 +17,4 @@ for client:<br>
     ```
     just run in the same machine as the server, it would connect through localhost.
 
-by default it will save files in difuse.local in the local directory, directory must exist prior to execution.
+by default it will save files in difuse.local in the local directory, directory must exist and be empty prior to execution.
